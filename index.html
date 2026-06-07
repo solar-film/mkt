@@ -1,0 +1,2065 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>แดชบอร์ดแชทรายวัน</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #17212b;
+      --muted: #667385;
+      --line: #d8e0ea;
+      --panel: #ffffff;
+      --wash: #f5f7fb;
+      --teal: #0f9f9a;
+      --coral: #e4644c;
+      --violet: #5f63d8;
+      --green: #2e9f62;
+      --amber: #c78916;
+      --blue: #2878c8;
+      --shadow: 0 12px 36px rgba(23, 33, 43, .08);
+      --radius: 8px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Tahoma, Arial, sans-serif;
+      background: var(--wash);
+      color: var(--ink);
+      letter-spacing: 0;
+    }
+
+    button, input, select { font: inherit; }
+
+    .shell {
+      min-height: 100vh;
+    }
+
+    .topbar {
+      background: #ffffff;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .topbar-inner {
+      width: min(1180px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 22px 0 18px;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 18px;
+      align-items: end;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(24px, 4vw, 38px);
+      line-height: 1.08;
+      font-weight: 780;
+    }
+
+    .subtitle {
+      margin: 8px 0 0;
+      color: var(--muted);
+      font-size: 15px;
+    }
+
+    .status {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .pill {
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 7px 10px;
+      background: #fff;
+      white-space: nowrap;
+    }
+
+    .pill.ok { color: #08715f; border-color: #a9ddd2; background: #eefaf6; }
+    .pill.warn { color: #9a5e00; border-color: #f0d69d; background: #fff8e7; }
+
+    .refresh-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      min-height: 34px;
+      border: 1px solid #17212b;
+      border-radius: 999px;
+      padding: 7px 12px;
+      color: #fff;
+      background: #17212b;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .refresh-btn:disabled {
+      cursor: wait;
+      opacity: .72;
+    }
+
+    .refresh-icon {
+      font-size: 15px;
+      line-height: 1;
+    }
+
+    main {
+      width: min(1180px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 22px 0 36px;
+    }
+
+    .toolbar {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      align-items: end;
+      margin-bottom: 18px;
+    }
+
+    .control {
+      display: grid;
+      gap: 6px;
+    }
+
+    .custom-range {
+      grid-column: 1 / -1;
+    }
+
+    .date-range {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .date-range input[type="date"] {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .date-range-sep {
+      color: var(--muted);
+      font-size: 13px;
+      white-space: nowrap;
+    }
+
+    .control label {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 650;
+    }
+
+    select, input[type="date"] {
+      width: 100%;
+      min-height: 40px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      color: var(--ink);
+      background: #fff;
+      padding: 8px 10px;
+    }
+
+    .segmented {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: #fff;
+      overflow: hidden;
+      min-height: 40px;
+    }
+
+    .segmented button {
+      border: 0;
+      border-right: 1px solid var(--line);
+      background: transparent;
+      color: var(--muted);
+      cursor: pointer;
+      min-width: 0;
+    }
+
+    .segmented button:last-child { border-right: 0; }
+    .segmented button.active { background: #17212b; color: #fff; }
+
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      min-width: 0;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.4fr) minmax(320px, .8fr);
+      gap: 16px;
+      align-items: stretch;
+    }
+
+    .grid > .left-stack,
+    .grid > aside {
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+    }
+
+    .grid > .left-stack > .section,
+    .grid > aside > .section:first-child {
+      display: flex;
+      flex: 1;
+      flex-direction: column;
+    }
+
+    .section {
+      margin-bottom: 18px;
+    }
+
+    .section-head {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 12px;
+      margin: 0 0 10px;
+    }
+
+    h2 {
+      margin: 0;
+      font-size: 18px;
+      line-height: 1.25;
+    }
+
+    .hint {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .chart-card {
+      padding: 16px 16px 12px;
+      flex: 1;
+      position: relative;
+    }
+
+    .chart {
+      width: 100%;
+      height: 320px;
+      display: block;
+    }
+
+    .chart-tooltip {
+      position: absolute;
+      z-index: 5;
+      min-width: 150px;
+      padding: 8px 10px;
+      border-radius: 8px;
+      background: #17212b;
+      color: #fff;
+      font-size: 12px;
+      line-height: 1.45;
+      box-shadow: 0 14px 32px rgba(15, 23, 42, .22);
+      opacity: 0;
+      pointer-events: none;
+      transform: translate(10px, -50%);
+      transition: opacity .12s ease;
+    }
+
+    .chart-tooltip strong {
+      display: block;
+      font-size: 15px;
+      line-height: 1.25;
+    }
+
+    .chart-tooltip.is-visible {
+      opacity: 1;
+    }
+
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px 14px;
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .legend-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+    }
+
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--c);
+    }
+
+    .company-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .grid > aside > .section:first-child .company-list {
+      flex: 1;
+      grid-auto-rows: 1fr;
+    }
+
+    #fbAdsCards,
+    #googleAdsCards {
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    #fbAdsCards .mini,
+    #googleAdsCards .mini {
+      min-width: 0;
+    }
+
+    #fbAdsCards .mini-value,
+    #googleAdsCards .mini-value {
+      font-size: clamp(18px, 2.2vw, 24px);
+      line-height: 1.05;
+      white-space: nowrap;
+      overflow-wrap: normal;
+    }
+
+    #fbAdsCards .ads-breakdown,
+    #googleAdsCards .ads-breakdown {
+      grid-column: 1 / -1;
+    }
+
+    .company-row {
+      display: grid;
+      grid-template-columns: 48px 1fr auto;
+      align-items: center;
+      gap: 10px;
+      padding: 12px;
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+    }
+
+    .company-code {
+      width: 42px;
+      height: 42px;
+      display: grid;
+      place-items: center;
+      border-radius: var(--radius);
+      color: #fff;
+      background: var(--accent);
+      font-weight: 800;
+      font-size: 12px;
+    }
+
+    .bar {
+      height: 10px;
+      background: #e9eef4;
+      border-radius: 999px;
+      overflow: hidden;
+      margin-top: 7px;
+    }
+
+    .bar span {
+      display: block;
+      height: 100%;
+      width: var(--w);
+      background: var(--accent);
+      border-radius: inherit;
+    }
+
+    .row-title {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      font-weight: 720;
+    }
+
+    .row-sub {
+      margin-top: 3px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .value {
+      font-weight: 800;
+      font-size: 22px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .split {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .mini {
+      padding: 14px;
+    }
+
+    .mini-title {
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 680;
+    }
+
+    .mini-value {
+      margin-top: 7px;
+      font-size: 28px;
+      font-weight: 800;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .ads-breakdown {
+      display: grid;
+      gap: 8px;
+      padding: 12px;
+    }
+
+    .ads-company-line {
+      display: grid;
+      grid-template-columns: 46px repeat(5, minmax(0, 1fr));
+      gap: 8px;
+      align-items: center;
+      padding: 9px 0;
+      border-top: 1px solid var(--line);
+    }
+
+    .ads-company-line:first-child {
+      border-top: 0;
+      padding-top: 0;
+    }
+
+    .ads-metric {
+      min-width: 0;
+    }
+
+    .ads-metric span {
+      display: block;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    .ads-metric strong {
+      display: block;
+      margin-top: 2px;
+      font-size: 13px;
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
+
+    .table-wrap {
+      overflow: auto;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: #fff;
+      box-shadow: var(--shadow);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 860px;
+      font-size: 14px;
+    }
+
+    th, td {
+      padding: 11px 12px;
+      border-bottom: 1px solid var(--line);
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
+
+    th {
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      background: #f9fbfd;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 750;
+    }
+
+    td:first-child, th:first-child,
+    td:nth-child(2), th:nth-child(2) {
+      text-align: left;
+    }
+
+    tr:last-child td { border-bottom: 0; }
+
+    .date-cell {
+      vertical-align: top;
+      font-weight: 700;
+      color: var(--ink);
+    }
+
+    .date-spacer {
+      color: transparent;
+    }
+
+    .channel-cell {
+      vertical-align: top;
+      font-weight: 750;
+    }
+
+    .channel-label {
+      display: block;
+    }
+
+    .source-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px 8px;
+      margin-top: 8px;
+      font-size: 12px;
+      line-height: 1.35;
+      font-weight: 650;
+    }
+
+    .source-links a {
+      color: #5f7186;
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+
+    .source-links a:hover {
+      color: #0f1724;
+    }
+
+    .total-cell {
+      vertical-align: top;
+      font-weight: 800;
+    }
+
+    .chat-cell {
+      vertical-align: top;
+      font-size: 15px;
+      font-weight: 700;
+    }
+
+    .chat-cell small,
+    .total-cell small {
+      display: block;
+      margin-top: 4px;
+      font-size: 12px;
+      color: inherit;
+      opacity: .78;
+      font-weight: 700;
+    }
+
+    .ads-cell {
+      min-width: 112px;
+      line-height: 1.42;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .ads-cell strong {
+      display: block;
+      font-size: 13px;
+    }
+
+    .ads-cell small {
+      display: block;
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .group-divider td {
+      border-top: 2px solid #cbd6e3;
+    }
+
+    tbody td:nth-child(3) {
+      color: #087f7a;
+    }
+
+    tbody td:nth-child(4) {
+      color: #c64f3e;
+    }
+
+    tbody td:nth-child(5) {
+      color: #4f55c8;
+    }
+
+    tbody td:nth-child(3) strong,
+    tbody td:nth-child(4) strong,
+    tbody td:nth-child(5) strong {
+      color: inherit;
+    }
+
+    .row-fb-ads,
+    .row-fb-chat,
+    .row-google-ads,
+    .row-line-chat,
+    .row-tel-call {
+      background: var(--row-bg);
+    }
+
+    .row-fb-ads { --row-bg: #eaf4ff; }
+    .row-fb-chat { --row-bg: #f3f9ff; }
+    .row-google-ads { --row-bg: #e9f8ec; }
+    .row-line-chat { --row-bg: #f3fbf5; }
+    .row-tel-call { --row-bg: #f1edff; }
+
+    .sub-divider td:not(.date-spacer) {
+      border-top: 1px solid #d8e0ea;
+    }
+
+    .sub-divider .date-spacer {
+      border-top-color: transparent;
+    }
+
+    .source {
+      margin-top: 22px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.55;
+    }
+
+    .source a {
+      color: var(--blue);
+      text-decoration: none;
+      font-weight: 650;
+    }
+
+    .empty {
+      padding: 22px;
+      color: var(--muted);
+      text-align: center;
+      border: 1px dashed var(--line);
+      border-radius: var(--radius);
+      background: #fff;
+    }
+
+    .is-hidden {
+      display: none;
+    }
+
+    @media (max-width: 920px) {
+      .topbar-inner, .toolbar, .grid, .split {
+        grid-template-columns: 1fr;
+      }
+
+      .status { justify-content: flex-start; }
+      .chart { height: 270px; }
+    }
+
+    @media (max-width: 560px) {
+      .topbar-inner, main { width: min(100% - 22px, 1180px); }
+      .company-row { grid-template-columns: 42px 1fr; }
+      .company-row .value { grid-column: 2; font-size: 18px; }
+      .pill { white-space: normal; }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header class="topbar">
+      <div class="topbar-inner">
+        <div>
+          <h1>แดชบอร์ดแชทรายวัน</h1>
+          <p class="subtitle">สรุปปริมาณแชทจาก Facebook และ LINE แยกตามบริษัท</p>
+        </div>
+        <div class="status" aria-live="polite">
+          <span class="pill" id="freshness">กำลังโหลดข้อมูล</span>
+          <button class="refresh-btn" id="refreshButton" type="button" title="ดึงข้อมูลล่าสุดจาก Google Sheets">
+            <span class="refresh-icon" aria-hidden="true">↻</span>
+            รีเฟรช
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <section class="toolbar" aria-label="ตัวกรองแดชบอร์ด">
+        <div class="control">
+          <label for="companyFilter">บริษัท</label>
+          <select id="companyFilter">
+            <option value="all">ทุกบริษัท</option>
+            <option value="MHL">MHL</option>
+            <option value="GFS">GFS</option>
+            <option value="CAR">CAR</option>
+          </select>
+        </div>
+        <div class="control">
+          <label>ช่องทาง</label>
+          <div class="segmented" id="channelFilter">
+            <button type="button" class="active" data-value="all">รวม</button>
+            <button type="button" data-value="FB">FB</button>
+            <button type="button" data-value="LINE">LINE</button>
+          </div>
+        </div>
+        <div class="control">
+          <label for="rangeFilter">ช่วงข้อมูล</label>
+          <select id="rangeFilter">
+            <option value="today">วันนี้</option>
+            <option value="yesterday">เมื่อวาน</option>
+            <option value="this_month" selected>เดือนนี้</option>
+            <option value="past_month">เดือนที่ผ่านมา</option>
+            <option value="year">ปีนี้</option>
+            <option value="all">ทั้งหมด</option>
+            <option value="custom">กำหนดเอง</option>
+          </select>
+        </div>
+        <div class="control custom-range is-hidden" id="customRange">
+          <label>เลือกช่วงวันที่</label>
+          <div class="date-range">
+            <input type="date" id="customStart" aria-label="วันที่เริ่มต้น">
+            <span class="date-range-sep">ถึง</span>
+            <input type="date" id="customEnd" aria-label="วันที่สิ้นสุด">
+          </div>
+        </div>
+      </section>
+
+      <div class="grid">
+        <div class="left-stack">
+          <section class="section">
+            <div class="section-head">
+              <h2>แนวโน้มรายวัน</h2>
+              <span class="hint" id="trendHint"></span>
+            </div>
+            <div class="card chart-card">
+              <svg class="chart" id="trendChart" role="img" aria-label="กราฟแนวโน้มรายวัน"></svg>
+              <div class="chart-tooltip" id="trendTooltip" aria-hidden="true"></div>
+              <div class="legend" id="trendLegend"></div>
+            </div>
+          </section>
+        </div>
+
+        <aside>
+          <section class="section">
+            <div class="section-head">
+              <h2>สัดส่วนตามบริษัท</h2>
+              <span class="hint" id="companyHint"></span>
+            </div>
+            <div class="company-list" id="companyList"></div>
+          </section>
+
+          <section class="section">
+            <div class="section-head">
+              <h2>สรุปช่องทาง</h2>
+            </div>
+            <div class="split" id="channelCards"></div>
+          </section>
+
+        </aside>
+      </div>
+
+      <section class="section" id="fbAdsSection">
+        <div class="section-head">
+          <h2>ข้อมูลโฆษณา FB</h2>
+          <span class="hint" id="adsHint"></span>
+        </div>
+        <div class="company-list" id="fbAdsCards"></div>
+      </section>
+
+      <section class="section" id="googleAdsSection">
+        <div class="section-head">
+          <h2>ข้อมูลโฆษณา Google Ads</h2>
+          <span class="hint" id="googleAdsHint"></span>
+        </div>
+        <div class="company-list" id="googleAdsCards"></div>
+      </section>
+
+      <section class="section">
+        <div class="section-head">
+          <h2>ตารางรายวัน</h2>
+          <div style="display:flex;align-items:baseline;gap:12px;">
+            <span class="hint" id="tableHint"></span>
+            <button type="button" id="tableToggle" class="refresh-btn" aria-expanded="false" aria-controls="tableWrap">
+              <span class="refresh-icon" aria-hidden="true">▸</span>
+              แสดงตาราง
+            </button>
+          </div>
+        </div>
+        <div class="table-wrap is-hidden" id="tableWrap">
+          <table>
+            <thead>
+              <tr>
+                <th>วันที่</th>
+                <th>ช่องทาง</th>
+                <th>MHL</th>
+                <th>GFS</th>
+                <th>CAR</th>
+                <th>TOTAL</th>
+              </tr>
+            </thead>
+            <tbody id="dailyTable"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="source" id="sourceNote"></section>
+    </main>
+  </div>
+
+  <script>
+    const SHEETS = [
+      {
+        channel: "FB",
+        id: "1stTHusIQEwwvshOalOUBD0ywD2As8ypIHlZgxxwN9MM",
+        gid: "1513042942",
+        sheet: "สรุป_FB",
+        url: "https://docs.google.com/spreadsheets/d/1stTHusIQEwwvshOalOUBD0ywD2As8ypIHlZgxxwN9MM/edit?gid=1513042942"
+      },
+      {
+        channel: "LINE",
+        id: "1doIr2kXj0C3HCen7OxNVOsTK95eE45rolbfWtgKYaTg",
+        gid: "766400265",
+        sheet: "สรุป_Line",
+        url: "https://docs.google.com/spreadsheets/d/1doIr2kXj0C3HCen7OxNVOsTK95eE45rolbfWtgKYaTg/edit?gid=766400265"
+      }
+    ];
+
+    const ADS_SHEET = {
+      id: "12e8phvzuBfLU9XTHX6x1NqXlhxUuCprTv0K_FtXgsI8",
+      gid: "71807432",
+      sheet: "📅 Daily All",
+      url: "https://docs.google.com/spreadsheets/d/12e8phvzuBfLU9XTHX6x1NqXlhxUuCprTv0K_FtXgsI8/edit?gid=71807432"
+    };
+
+    const SNAPSHOT = {
+      generatedAt: "2026-06-07T00:00:00+07:00",
+      rows: [
+        { channel: "FB", month: "ม.ค. 26", day: "10/1/2026", MHL: 0, GFS: 1, CAR: 0, total: 1 },
+        { channel: "FB", month: "เม.ย. 26", day: "4/4/2026", MHL: 0, GFS: 1, CAR: 0, total: 1 },
+        { channel: "FB", month: "เม.ย. 26", day: "27/4/2026", MHL: 0, GFS: 3, CAR: 0, total: 3 },
+        { channel: "FB", month: "พ.ค. 26", day: "7/5/2026", MHL: 1, GFS: 0, CAR: 0, total: 1 },
+        { channel: "FB", month: "พ.ค. 26", day: "11/5/2026", MHL: 1, GFS: 0, CAR: 0, total: 1 },
+        { channel: "FB", month: "พ.ค. 26", day: "12/5/2026", MHL: 2, GFS: 1, CAR: 0, total: 3 },
+        { channel: "FB", month: "พ.ค. 26", day: "18/5/2026", MHL: 1, GFS: 0, CAR: 0, total: 1 },
+        { channel: "FB", month: "พ.ค. 26", day: "19/5/2026", MHL: 0, GFS: 1, CAR: 0, total: 1 },
+        { channel: "FB", month: "พ.ค. 26", day: "20/5/2026", MHL: 0, GFS: 1, CAR: 0, total: 1 },
+        { channel: "FB", month: "พ.ค. 26", day: "21/5/2026", MHL: 2, GFS: 0, CAR: 0, total: 2 },
+        { channel: "FB", month: "พ.ค. 26", day: "22/5/2026", MHL: 2, GFS: 2, CAR: 0, total: 4 },
+        { channel: "FB", month: "พ.ค. 26", day: "23/5/2026", MHL: 1, GFS: 1, CAR: 0, total: 2 },
+        { channel: "FB", month: "พ.ค. 26", day: "25/5/2026", MHL: 3, GFS: 2, CAR: 0, total: 5 },
+        { channel: "FB", month: "พ.ค. 26", day: "26/5/2026", MHL: 11, GFS: 1, CAR: 0, total: 12 },
+        { channel: "FB", month: "พ.ค. 26", day: "27/5/2026", MHL: 8, GFS: 3, CAR: 0, total: 11 },
+        { channel: "FB", month: "พ.ค. 26", day: "28/5/2026", MHL: 3, GFS: 2, CAR: 0, total: 5 },
+        { channel: "FB", month: "พ.ค. 26", day: "29/5/2026", MHL: 2, GFS: 6, CAR: 0, total: 8 },
+        { channel: "FB", month: "พ.ค. 26", day: "30/5/2026", MHL: 1, GFS: 2, CAR: 0, total: 3 },
+        { channel: "FB", month: "มิ.ย. 26", day: "1/6/2026", MHL: 1, GFS: 5, CAR: 1, total: 7 },
+        { channel: "FB", month: "มิ.ย. 26", day: "2/6/2026", MHL: 2, GFS: 3, CAR: 0, total: 5 },
+        { channel: "FB", month: "มิ.ย. 26", day: "3/6/2026", MHL: 3, GFS: 4, CAR: 1, total: 8 },
+        { channel: "FB", month: "มิ.ย. 26", day: "4/6/2026", MHL: 1, GFS: 3, CAR: 14, total: 18 },
+        { channel: "FB", month: "มิ.ย. 26", day: "5/6/2026", MHL: 3, GFS: 4, CAR: 17, total: 24 },
+        { channel: "FB", month: "มิ.ย. 26", day: "6/6/2026", MHL: 2, GFS: 4, CAR: 21, total: 27 },
+        { channel: "FB", month: "มิ.ย. 26", day: "7/6/2026", MHL: 0, GFS: 0, CAR: 7, total: 7 },
+        { channel: "LINE", month: "พ.ค. 26", day: "25/5/2026", MHL: 76, GFS: 72, CAR: 17, total: 165 },
+        { channel: "LINE", month: "พ.ค. 26", day: "26/5/2026", MHL: 44, GFS: 47, CAR: 15, total: 106 },
+        { channel: "LINE", month: "พ.ค. 26", day: "27/5/2026", MHL: 36, GFS: 35, CAR: 13, total: 84 },
+        { channel: "LINE", month: "พ.ค. 26", day: "28/5/2026", MHL: 32, GFS: 41, CAR: 3, total: 76 },
+        { channel: "LINE", month: "พ.ค. 26", day: "29/5/2026", MHL: 35, GFS: 37, CAR: 7, total: 79 },
+        { channel: "LINE", month: "พ.ค. 26", day: "30/5/2026", MHL: 14, GFS: 23, CAR: 9, total: 46 },
+        { channel: "LINE", month: "พ.ค. 26", day: "31/5/2026", MHL: 3, GFS: 7, CAR: 3, total: 13 },
+        { channel: "LINE", month: "มิ.ย. 26", day: "1/6/2026", MHL: 17, GFS: 12, CAR: 6, total: 35 },
+        { channel: "LINE", month: "มิ.ย. 26", day: "2/6/2026", MHL: 2, GFS: 2, CAR: 1, total: 5 },
+        { channel: "LINE", month: "มิ.ย. 26", day: "3/6/2026", MHL: 41, GFS: 16, CAR: 15, total: 72 },
+        { channel: "LINE", month: "มิ.ย. 26", day: "4/6/2026", MHL: 35, GFS: 16, CAR: 9, total: 60 },
+        { channel: "LINE", month: "มิ.ย. 26", day: "5/6/2026", MHL: 29, GFS: 32, CAR: 10, total: 71 },
+        { channel: "LINE", month: "มิ.ย. 26", day: "6/6/2026", MHL: 26, GFS: 14, CAR: 4, total: 44 },
+        { channel: "LINE", month: "มิ.ย. 26", day: "7/6/2026", MHL: 2, GFS: 1, CAR: 3, total: 6 }
+      ]
+    };
+
+    const ADS_SNAPSHOT = {
+      generatedAt: "2026-06-07T00:00:00+07:00",
+      rows: [
+        { day: "03/06/2026", account: "GFS", spend: "38.54", clicks: "11.00", cpc: "3.50" },
+        { day: "03/06/2026", account: "MHL", spend: "136.79", clicks: "27.00", cpc: "5.07" },
+        { day: "03/06/2026", account: "CAR", spend: "1,785.59", clicks: "289.00", cpc: "6.18" },
+        { day: "02/06/2026", account: "MHL", spend: "139.29", clicks: "20.00", cpc: "6.96" },
+        { day: "02/06/2026", account: "CAR", spend: "1,710.82", clicks: "366.00", cpc: "4.67" },
+        { day: "01/06/2026", account: "GFS", spend: "0.00", clicks: "0.00", cpc: "0.00" },
+        { day: "01/06/2026", account: "MHL", spend: "167.77", clicks: "32.00", cpc: "5.24" },
+        { day: "01/06/2026", account: "CAR", spend: "1,812.18", clicks: "278.00", cpc: "6.52" },
+        { day: "04/06/2026", account: "GFS", spend: "314.01", clicks: "69.00", cpc: "4.55" },
+        { day: "04/06/2026", account: "MHL", spend: "134.34", clicks: "25.00", cpc: "5.37" },
+        { day: "04/06/2026", account: "CAR", spend: "1,533.50", clicks: "235.00", cpc: "6.53" },
+        { day: "05/06/2026", account: "GFS", spend: "453.77", clicks: "68.00", cpc: "6.67" },
+        { day: "05/06/2026", account: "MHL", spend: "143.73", clicks: "22.00", cpc: "6.53" },
+        { day: "05/06/2026", account: "CAR", spend: "1,423.49", clicks: "171.00", cpc: "8.32" },
+        { day: "06/06/2026", account: "GFS", spend: "505.57", clicks: "58.00", cpc: "8.72" },
+        { day: "06/06/2026", account: "MHL", spend: "167.47", clicks: "16.00", cpc: "10.47" },
+        { day: "06/06/2026", account: "CAR", spend: "1,443.31", clicks: "166.00", cpc: "8.69" },
+        { day: "07/06/2026", account: "GFS", spend: "145.86", clicks: "24.00", cpc: "6.08" },
+        { day: "07/06/2026", account: "MHL", spend: "66.71", clicks: "6.00", cpc: "11.12" },
+        { day: "07/06/2026", account: "CAR", spend: "644.05", clicks: "78.00", cpc: "8.26" }
+      ]
+    };
+
+    const CALL_SNAPSHOT = {
+      generatedAt: "2026-06-06T00:00:00+07:00",
+      sourceFiles: ["TEL-GFS.csv", "TEL-MHL+CAR.csv"],
+      rows: [
+        { day: "2026-06-01", company: "CAR", calls: 19, seconds: 2752 },
+        { day: "2026-06-01", company: "GFS", calls: 7, seconds: 468 },
+        { day: "2026-06-01", company: "MHL", calls: 16, seconds: 1298 },
+        { day: "2026-06-02", company: "CAR", calls: 10, seconds: 2648 },
+        { day: "2026-06-02", company: "GFS", calls: 8, seconds: 744 },
+        { day: "2026-06-02", company: "MHL", calls: 14, seconds: 822 },
+        { day: "2026-06-03", company: "CAR", calls: 17, seconds: 2326 },
+        { day: "2026-06-03", company: "GFS", calls: 7, seconds: 1131 },
+        { day: "2026-06-03", company: "MHL", calls: 12, seconds: 482 },
+        { day: "2026-06-04", company: "CAR", calls: 13, seconds: 1699 },
+        { day: "2026-06-04", company: "GFS", calls: 7, seconds: 228 },
+        { day: "2026-06-04", company: "MHL", calls: 19, seconds: 1564 },
+        { day: "2026-06-05", company: "CAR", calls: 13, seconds: 1336 },
+        { day: "2026-06-05", company: "GFS", calls: 13, seconds: 1315 },
+        { day: "2026-06-05", company: "MHL", calls: 16, seconds: 1498 },
+        { day: "2026-06-06", company: "CAR", calls: 21, seconds: 1550 },
+        { day: "2026-06-06", company: "GFS", calls: 10, seconds: 1068 },
+        { day: "2026-06-06", company: "MHL", calls: 8, seconds: 1022 }
+      ]
+    };
+
+    const GOOGLE_ADS_SNAPSHOT = {
+      generatedAt: "2026-06-06T00:00:00+07:00",
+      sourceFile: "Google_Ads_Combined.csv",
+      rows: [
+        { day: "2026-06-01", company: "CAR", spend: 1347.43, clicks: 1960, cpc: 0.69 },
+        { day: "2026-06-01", company: "GFS", spend: 5002.09, clicks: 197, cpc: 25.39 },
+        { day: "2026-06-01", company: "MHL", spend: 5251.59, clicks: 425, cpc: 12.36 },
+        { day: "2026-06-02", company: "CAR", spend: 1605.27, clicks: 1760, cpc: 0.91 },
+        { day: "2026-06-02", company: "GFS", spend: 3652.41, clicks: 2541, cpc: 1.44 },
+        { day: "2026-06-02", company: "MHL", spend: 7076.65, clicks: 644, cpc: 10.99 },
+        { day: "2026-06-03", company: "CAR", spend: 2278.59, clicks: 2322, cpc: 0.98 },
+        { day: "2026-06-03", company: "GFS", spend: 0, clicks: 0, cpc: 0 },
+        { day: "2026-06-03", company: "MHL", spend: 6223.36, clicks: 547, cpc: 11.38 },
+        { day: "2026-06-04", company: "CAR", spend: 1035.89, clicks: 1063, cpc: 0.97 },
+        { day: "2026-06-04", company: "GFS", spend: 635.14, clicks: 1578, cpc: 0.40 },
+        { day: "2026-06-04", company: "MHL", spend: 6147.78, clicks: 512, cpc: 12.01 },
+        { day: "2026-06-05", company: "CAR", spend: 2043.54, clicks: 1860, cpc: 1.10 },
+        { day: "2026-06-05", company: "GFS", spend: 5044.56, clicks: 212, cpc: 23.80 },
+        { day: "2026-06-05", company: "MHL", spend: 6116.54, clicks: 487, cpc: 12.56 },
+        { day: "2026-06-06", company: "CAR", spend: 1241.16, clicks: 1531, cpc: 0.81 },
+        { day: "2026-06-06", company: "GFS", spend: 2694.94, clicks: 3159, cpc: 0.85 },
+        { day: "2026-06-06", company: "MHL", spend: 5731.49, clicks: 492, cpc: 11.65 }
+      ]
+    };
+
+    const COLORS = {
+      MHL: "#0f9f9a",
+      GFS: "#e4644c",
+      CAR: "#5f63d8",
+      total: "#17212b",
+      FB: "#2878c8",
+      LINE: "#2e9f62",
+      green: "#2e9f62",
+      amber: "#c78916",
+      violet: "#5f63d8"
+    };
+
+    const COMPANIES = ["MHL", "GFS", "CAR"];
+    const LOCAL_FILES = {
+      googleAds: "Google Ads/Google_Ads_Combined.csv",
+      calls: ["ประวัติการโทร/TEL-GFS.csv", "ประวัติการโทร/TEL-MHL+CAR.csv"]
+    };
+    const SOURCE_LINKS = {
+      fbAds: [{ label: ADS_SHEET.sheet, url: ADS_SHEET.url }],
+      fbChat: [{ label: SHEETS[0].sheet, url: SHEETS[0].url }],
+      googleAds: [{ label: "Google_Ads_Combined.csv", url: LOCAL_FILES.googleAds }],
+      lineChat: [{ label: SHEETS[1].sheet, url: SHEETS[1].url }],
+      telCall: [
+        { label: "TEL-GFS.csv", url: LOCAL_FILES.calls[0] },
+        { label: "TEL-MHL+CAR.csv", url: LOCAL_FILES.calls[1] }
+      ]
+    };
+    const PHONE_COMPANY = {
+      "66994565294": "MHL",
+      "66972929488": "MHL",
+      "66949981234": "MHL",
+      "66959533949": "CAR",
+      "66994562259": "CAR",
+      "66970972103": "GFS",
+      "66909793760": "GFS",
+      "66627471234": "GFS"
+    };
+
+    const state = {
+      rows: [],
+      adRows: [],
+      callRows: [],
+      googleAdRows: [],
+      sourceMode: "snapshot",
+      adSourceMode: "snapshot",
+      channel: "all",
+      company: "all",
+      range: "this_month",
+      selectedDate: "",
+      customStart: "",
+      customEnd: ""
+    };
+
+    const fmt = new Intl.NumberFormat("th-TH");
+    const dateFmt = new Intl.DateTimeFormat("th-TH", { day: "numeric", month: "short", year: "2-digit" });
+
+    function parseThaiDate(value) {
+      if (!value) return null;
+      const parts = String(value).trim().split(/[/-]/).map(Number);
+      if (parts.length !== 3 || parts.some(Number.isNaN)) return null;
+      const [day, month, year] = parts;
+      return new Date(year, month - 1, day);
+    }
+
+    function isoDate(date) {
+      const y = date.getFullYear();
+      const m = String(date.getMonth() + 1).padStart(2, "0");
+      const d = String(date.getDate()).padStart(2, "0");
+      return `${y}-${m}-${d}`;
+    }
+
+    function numeric(value) {
+      const cleaned = String(value ?? "").replace(/,/g, "").trim();
+      const n = Number(cleaned);
+      return Number.isFinite(n) ? n : 0;
+    }
+
+    function cleanCell(value) {
+      return String(value ?? "").replace(/^"+|"+$/g, "").trim();
+    }
+
+    function parseCsv(text) {
+      const rows = [];
+      let row = [];
+      let cell = "";
+      let quoted = false;
+      for (let i = 0; i < text.length; i++) {
+        const char = text[i];
+        const next = text[i + 1];
+        if (char === '"') {
+          if (quoted && next === '"') {
+            cell += '"';
+            i++;
+          } else {
+            quoted = !quoted;
+          }
+        } else if (char === "," && !quoted) {
+          row.push(cleanCell(cell));
+          cell = "";
+        } else if ((char === "\n" || char === "\r") && !quoted) {
+          if (char === "\r" && next === "\n") i++;
+          row.push(cleanCell(cell));
+          if (row.some((value) => value !== "")) rows.push(row);
+          row = [];
+          cell = "";
+        } else {
+          cell += char;
+        }
+      }
+      row.push(cleanCell(cell));
+      if (row.some((value) => value !== "")) rows.push(row);
+      if (!rows.length) return [];
+      const headers = rows[0].map(cleanCell);
+      return rows.slice(1).map((values) => Object.fromEntries(headers.map((header, index) => [header, cleanCell(values[index])])));
+    }
+
+    async function loadLocalCsv(path) {
+      const url = `${encodeURI(path)}?v=${Date.now()}`;
+      const response = await fetch(url, { cache: "no-store" });
+      if (!response.ok) throw new Error(`load ${path}`);
+      return parseCsv(await response.text());
+    }
+
+    function companyFromGoogleSource(row) {
+      const source = `${row.SourceAccount || ""} ${row.SourceFile || ""}`.toUpperCase();
+      return COMPANIES.find((company) => source.includes(company)) || "";
+    }
+
+    async function loadGoogleAdsCsv() {
+      const rows = await loadLocalCsv(LOCAL_FILES.googleAds);
+      return rows.map((row) => ({
+        day: row["วัน"],
+        company: companyFromGoogleSource(row),
+        spend: row["ค่าใช้จ่าย"],
+        clicks: row["คลิก"],
+        cpc: row["CPC เฉลี่ย"]
+      })).map(normalizeGoogleAdRow).filter((row) => row.date && row.company);
+    }
+
+    function normalizePhone(value) {
+      return String(value || "").replace(/\D/g, "");
+    }
+
+    async function loadCallCsvs() {
+      const files = await Promise.all(LOCAL_FILES.calls.map(loadLocalCsv));
+      const buckets = new Map();
+      files.flat().forEach((row) => {
+        const phone = normalizePhone(row["Local Party"]);
+        const company = PHONE_COMPANY[phone];
+        const started = cleanCell(row["Start Date"]);
+        const day = started.slice(0, 10);
+        if (!company || !/^\d{4}-\d{2}-\d{2}$/.test(day)) return;
+        const key = `${day}|${company}`;
+        if (!buckets.has(key)) buckets.set(key, { day, company, calls: 0, seconds: 0 });
+        const item = buckets.get(key);
+        item.calls += 1;
+        item.seconds += numeric(row["Duration (secs)"]);
+      });
+      return [...buckets.values()].map(normalizeCallRow).filter((row) => row.date && row.company);
+    }
+
+    function normalizeRow(row) {
+      const date = parseThaiDate(row.day);
+      return {
+        ...row,
+        date,
+        iso: date ? isoDate(date) : "",
+        MHL: numeric(row.MHL),
+        GFS: numeric(row.GFS),
+        CAR: numeric(row.CAR),
+        total: numeric(row.total)
+      };
+    }
+
+    function normalizeAdRow(row) {
+      const date = parseThaiDate(row.day);
+      const spend = numeric(row.spend);
+      const clicks = numeric(row.clicks);
+      return {
+        ...row,
+        date,
+        iso: date ? isoDate(date) : "",
+        account: String(row.account || "").trim(),
+        spend,
+        clicks,
+        cpc: clicks ? spend / clicks : numeric(row.cpc)
+      };
+    }
+
+    function normalizeCallRow(row) {
+      const date = parseIso(row.day);
+      return {
+        ...row,
+        date,
+        iso: date ? isoDate(date) : "",
+        company: String(row.company || "").trim(),
+        calls: numeric(row.calls),
+        seconds: numeric(row.seconds)
+      };
+    }
+
+    function normalizeGoogleAdRow(row) {
+      const date = parseIso(row.day);
+      const spend = numeric(row.spend);
+      const clicks = numeric(row.clicks);
+      return {
+        ...row,
+        date,
+        iso: date ? isoDate(date) : "",
+        company: String(row.company || "").trim(),
+        spend,
+        clicks,
+        cpc: clicks ? spend / clicks : numeric(row.cpc)
+      };
+    }
+
+    function rowsFromGviz(channel, table) {
+      const rawRows = table.rows || [];
+      return rawRows
+        .map((r) => (r.c || []).map((c) => c ? (c.f ?? c.v ?? "") : ""))
+        .filter((r) => r.length >= 6)
+        .filter((r) => !["Month", "เดือน"].includes(String(r[0]).trim()))
+        .filter((r) => parseThaiDate(r[1]))
+        .map((r) => normalizeRow({
+          channel,
+          month: String(r[0] || "").trim(),
+          day: String(r[1] || "").trim(),
+          MHL: r[2],
+          GFS: r[3],
+          CAR: r[4],
+          total: r[5]
+        }));
+    }
+
+    function adRowsFromGviz(table) {
+      const rawRows = table.rows || [];
+      return rawRows
+        .map((r) => (r.c || []).map((c) => c ? (c.f ?? c.v ?? "") : ""))
+        .filter((r) => r.length >= 5)
+        .filter((r) => parseThaiDate(r[0]))
+        .map((r) => normalizeAdRow({
+          day: String(r[0] || "").trim(),
+          account: String(r[1] || "").trim(),
+          spend: r[2],
+          clicks: r[3],
+          cpc: r[4]
+        }))
+        .filter((r) => r.date && ["MHL", "GFS", "CAR"].includes(r.account));
+    }
+
+    function loadSheet(sheet) {
+      return new Promise((resolve, reject) => {
+        const cb = `sheetCallback_${sheet.channel}_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+        const timer = setTimeout(() => {
+          cleanup();
+          reject(new Error("timeout"));
+        }, 8000);
+
+        function cleanup() {
+          clearTimeout(timer);
+          delete window[cb];
+          if (script.parentNode) script.parentNode.removeChild(script);
+        }
+
+        window[cb] = (payload) => {
+          cleanup();
+          if (!payload || payload.status === "error") {
+            reject(new Error(payload?.errors?.[0]?.detailed_message || "load error"));
+            return;
+          }
+          resolve(rowsFromGviz(sheet.channel, payload.table || {}));
+        };
+
+        const script = document.createElement("script");
+        const query = encodeURIComponent("select A,B,C,D,E,F");
+        script.src = `https://docs.google.com/spreadsheets/d/${sheet.id}/gviz/tq?gid=${sheet.gid}&headers=2&tq=${query}&tqx=out:json;responseHandler:${cb}`;
+        script.onerror = () => {
+          cleanup();
+          reject(new Error("network"));
+        };
+        document.head.appendChild(script);
+      });
+    }
+
+    function loadAdSheet() {
+      return new Promise((resolve, reject) => {
+        const cb = `adsCallback_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+        const timer = setTimeout(() => {
+          cleanup();
+          reject(new Error("timeout"));
+        }, 8000);
+
+        function cleanup() {
+          clearTimeout(timer);
+          delete window[cb];
+          if (script.parentNode) script.parentNode.removeChild(script);
+        }
+
+        window[cb] = (payload) => {
+          cleanup();
+          if (!payload || payload.status === "error") {
+            reject(new Error(payload?.errors?.[0]?.detailed_message || "load error"));
+            return;
+          }
+          resolve(adRowsFromGviz(payload.table || {}));
+        };
+
+        const script = document.createElement("script");
+        const query = encodeURIComponent("select A,B,C,F,G");
+        script.src = `https://docs.google.com/spreadsheets/d/${ADS_SHEET.id}/gviz/tq?gid=${ADS_SHEET.gid}&headers=1&tq=${query}&tqx=out:json;responseHandler:${cb}`;
+        script.onerror = () => {
+          cleanup();
+          reject(new Error("network"));
+        };
+        document.head.appendChild(script);
+      });
+    }
+
+    async function loadData(isRefresh = false) {
+      const refreshButton = document.getElementById("refreshButton");
+      if (refreshButton) {
+        refreshButton.disabled = true;
+        refreshButton.querySelector(".refresh-icon").textContent = isRefresh ? "…" : "↻";
+      }
+      if (isRefresh) {
+        document.getElementById("freshness").textContent = "กำลังรีเฟรชข้อมูล";
+      }
+      const snapshotRows = SNAPSHOT.rows.map(normalizeRow).filter((r) => r.date);
+      const snapshotAds = ADS_SNAPSHOT.rows.map(normalizeAdRow).filter((r) => r.date);
+      state.callRows = CALL_SNAPSHOT.rows.map(normalizeCallRow).filter((r) => r.date);
+      state.googleAdRows = GOOGLE_ADS_SNAPSHOT.rows.map(normalizeGoogleAdRow).filter((r) => r.date);
+
+      try {
+        const localCalls = await loadCallCsvs();
+        if (localCalls.length) {
+          state.callRows = localCalls.sort((a, b) => a.date - b.date || a.company.localeCompare(b.company));
+        }
+      } catch (err) {
+        // Static file:// pages cannot read local CSV; keep the embedded fallback.
+      }
+
+      try {
+        const localGoogleAds = await loadGoogleAdsCsv();
+        if (localGoogleAds.length) {
+          state.googleAdRows = localGoogleAds.sort((a, b) => a.date - b.date || a.company.localeCompare(b.company));
+        }
+      } catch (err) {
+        // Static file:// pages cannot read local CSV; keep the embedded fallback.
+      }
+
+      const sheetResults = await Promise.all(SHEETS.map(async (sheet) => {
+        try {
+          const liveRows = await loadSheet(sheet);
+          if (!liveRows.length) throw new Error("empty");
+          return { mode: "live", rows: liveRows };
+        } catch (err) {
+          return {
+            mode: "snapshot",
+            rows: snapshotRows.filter((row) => row.channel === sheet.channel)
+          };
+        }
+      }));
+      state.rows = sheetResults
+        .flatMap((result) => result.rows)
+        .sort((a, b) => a.date - b.date || a.channel.localeCompare(b.channel));
+      state.sourceMode = sheetResults.every((result) => result.mode === "live")
+        ? "live"
+        : sheetResults.some((result) => result.mode === "live")
+          ? "mixed"
+          : "snapshot";
+
+      try {
+        const liveAds = await loadAdSheet();
+        if (!liveAds.length) throw new Error("empty");
+        state.adRows = liveAds.sort((a, b) => a.date - b.date || a.account.localeCompare(b.account));
+        state.adSourceMode = "live";
+      } catch (err) {
+        state.adRows = snapshotAds.sort((a, b) => a.date - b.date || a.account.localeCompare(b.account));
+        state.adSourceMode = "snapshot";
+      }
+      setDefaultDate();
+      render();
+      if (refreshButton) {
+        refreshButton.disabled = false;
+        refreshButton.querySelector(".refresh-icon").textContent = "↻";
+      }
+    }
+
+    function setDefaultDate() {
+      const dates = allSourceDates().sort();
+      const latest = dates[dates.length - 1] || "";
+      state.selectedDate = latest;
+    }
+
+    function allSourceDates() {
+      return [...new Set([
+        ...state.rows.map((r) => r.iso),
+        ...state.adRows.map((r) => r.iso),
+        ...state.callRows.map((r) => r.iso),
+        ...state.googleAdRows.map((r) => r.iso)
+      ].filter(Boolean))];
+    }
+
+    function getFilteredRows() {
+      let rows = state.rows.slice();
+      if (state.channel !== "all") rows = rows.filter((r) => r.channel === state.channel);
+      return filterRowsByRange(rows);
+    }
+
+    function getFilteredAdRows() {
+      let rows = state.adRows.slice();
+      if (state.company !== "all") rows = rows.filter((r) => r.account === state.company);
+      return filterRowsByRange(rows);
+    }
+
+    function getFilteredCallRows() {
+      let rows = state.callRows.slice();
+      if (state.company !== "all") rows = rows.filter((r) => r.company === state.company);
+      return filterRowsByRange(rows);
+    }
+
+    function getFilteredGoogleAdRows() {
+      let rows = state.googleAdRows.slice();
+      if (state.company !== "all") rows = rows.filter((r) => r.company === state.company);
+      return filterRowsByRange(rows);
+    }
+
+    function filterRowsByRange(rows) {
+      if (state.range === "custom") {
+        const start = parseIso(state.customStart);
+        const end = parseIso(state.customEnd);
+        return rows.filter((r) => {
+          if (start && r.date < start) return false;
+          if (end && r.date > end) return false;
+          return true;
+        });
+      }
+
+      const latestDate = parseIso(state.selectedDate);
+      if (!latestDate || state.range === "all") return rows;
+
+      if (state.range === "today") {
+        return rows.filter((r) => r.iso === state.selectedDate);
+      }
+
+      if (state.range === "yesterday") {
+        const yesterday = new Date(latestDate);
+        yesterday.setDate(yesterday.getDate() - 1);
+        const yesterdayIso = isoDate(yesterday);
+        return rows.filter((r) => r.iso === yesterdayIso);
+      }
+
+      if (state.range === "past_month") {
+        const start = new Date(latestDate);
+        start.setDate(start.getDate() - 29);
+        return rows.filter((r) => r.date >= start && r.date <= latestDate);
+      }
+
+      if (state.range === "this_month") {
+        const start = new Date(latestDate.getFullYear(), latestDate.getMonth(), 1);
+        return rows.filter((r) => r.date >= start && r.date <= latestDate);
+      }
+
+      if (state.range === "year") {
+        return rows.filter((r) => r.date.getFullYear() === latestDate.getFullYear() && r.date <= latestDate);
+      }
+
+      return rows;
+    }
+
+    function parseIso(value) {
+      if (!value) return null;
+      const [y, m, d] = value.split("-").map(Number);
+      return new Date(y, m - 1, d);
+    }
+
+    function sumRows(rows, company = "all") {
+      if (company !== "all") return rows.reduce((sum, r) => sum + r[company], 0);
+      return rows.reduce((sum, r) => sum + r.total, 0);
+    }
+
+    function groupByDate(rows) {
+      const map = new Map();
+      rows.forEach((r) => {
+        if (!map.has(r.iso)) {
+          map.set(r.iso, { iso: r.iso, date: r.date, MHL: 0, GFS: 0, CAR: 0, total: 0 });
+        }
+        const item = map.get(r.iso);
+        item.MHL += r.MHL;
+        item.GFS += r.GFS;
+        item.CAR += r.CAR;
+        item.total += r.total;
+      });
+      return [...map.values()].sort((a, b) => a.date - b.date);
+    }
+
+    function groupAdSpendByDate(adRows, googleAdRows) {
+      const map = new Map();
+      const ensure = (row) => {
+        if (!map.has(row.iso)) {
+          map.set(row.iso, { iso: row.iso, date: row.date, MHL: 0, GFS: 0, CAR: 0, total: 0 });
+        }
+        return map.get(row.iso);
+      };
+
+      adRows.forEach((row) => {
+        const company = row.account;
+        if (!COMPANIES.includes(company)) return;
+        const item = ensure(row);
+        item[company] += row.spend;
+        item.total += row.spend;
+      });
+
+      googleAdRows.forEach((row) => {
+        const company = row.company;
+        if (!COMPANIES.includes(company)) return;
+        const item = ensure(row);
+        item[company] += row.spend;
+        item.total += row.spend;
+      });
+
+      return [...map.values()].sort((a, b) => a.date - b.date);
+    }
+
+    function rowsForSelectedDate(rows) {
+      const activeIso = [...new Set(rows.map((r) => r.iso))].sort().pop();
+      return activeIso ? rows.filter((r) => r.iso === activeIso) : [];
+    }
+
+    function render() {
+      const rows = getFilteredRows();
+      const adRows = getFilteredAdRows();
+      const callRows = getFilteredCallRows();
+      const googleAdRows = getFilteredGoogleAdRows();
+      const dayRows = rowsForSelectedDate(rows);
+      const trendRows = groupByDate(rows);
+      const spendTrendRows = groupAdSpendByDate(adRows, googleAdRows);
+      renderStatus();
+      renderTrend(spendTrendRows);
+      renderCompanies(adRows, googleAdRows);
+      renderChannels(rows);
+      renderAds(adRows, rows);
+      renderGoogleAds(googleAdRows, rows);
+      renderTable(rows, adRows, callRows, googleAdRows);
+      renderSource();
+    }
+
+    function renderStatus() {
+      const dates = allSourceDates().map(parseIso).filter(Boolean).sort((a, b) => a - b);
+      const latest = dates[dates.length - 1];
+      const freshness = document.getElementById("freshness");
+      freshness.textContent = latest ? `ข้อมูลล่าสุด ${dateFmt.format(latest)}` : "ยังไม่มีข้อมูล";
+    }
+
+    function renderTrend(rows) {
+      const svg = document.getElementById("trendChart");
+      const tooltip = document.getElementById("trendTooltip");
+      const w = 900;
+      const h = 320;
+      const pad = { top: 18, right: 20, bottom: 42, left: 82 };
+      const chartW = w - pad.left - pad.right;
+      const chartH = h - pad.top - pad.bottom;
+      const seriesKeys = state.company === "all" ? ["MHL", "GFS", "CAR"] : [state.company];
+      const max = Math.max(1, ...rows.flatMap((r) => seriesKeys.map((k) => r[k])));
+
+      svg.setAttribute("viewBox", `0 0 ${w} ${h}`);
+      svg.innerHTML = "";
+      tooltip?.classList.remove("is-visible");
+
+      if (!rows.length) {
+        svg.innerHTML = `<text x="${w / 2}" y="${h / 2}" text-anchor="middle" fill="#667385" font-size="18">ไม่มีข้อมูลในตัวกรองนี้</text>`;
+        document.getElementById("trendLegend").innerHTML = "";
+        return;
+      }
+
+      const x = (i) => pad.left + (rows.length === 1 ? chartW / 2 : (i / (rows.length - 1)) * chartW);
+      const y = (v) => pad.top + chartH - (v / max) * chartH;
+      const grid = [];
+      for (let i = 0; i <= 4; i++) {
+        const value = Math.round(max * i / 4);
+        const yy = y(value);
+        grid.push(`<line x1="${pad.left}" y1="${yy}" x2="${w - pad.right}" y2="${yy}" stroke="#d8e0ea" stroke-width="1"/>`);
+        grid.push(`<text x="${pad.left - 10}" y="${yy + 4}" text-anchor="end" fill="#667385" font-size="12">฿${fmt.format(value)}</text>`);
+      }
+      svg.insertAdjacentHTML("beforeend", grid.join(""));
+
+      rows.forEach((r, i) => {
+        const showLabel = rows.length <= 14 || i === 0 || i === rows.length - 1 || i % Math.ceil(rows.length / 6) === 0;
+        if (showLabel) {
+          svg.insertAdjacentHTML("beforeend", `<text x="${x(i)}" y="${h - 15}" text-anchor="middle" fill="#667385" font-size="12">${dateFmt.format(r.date).replace(" พ.ศ. ", " ")}</text>`);
+        }
+      });
+
+      seriesKeys.forEach((key) => {
+        const points = rows.map((r, i) => `${x(i)},${y(r[key])}`).join(" ");
+        svg.insertAdjacentHTML("beforeend", `<polyline fill="none" stroke="${COLORS[key]}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" points="${points}"/>`);
+        rows.forEach((r, i) => {
+          const tip = `${key}|${dateFmt.format(r.date)}|${money(r[key])}`;
+          svg.insertAdjacentHTML("beforeend", `<circle cx="${x(i)}" cy="${y(r[key])}" r="5" fill="#fff" stroke="${COLORS[key]}" stroke-width="2" data-tip="${tip}" style="cursor:pointer"><title>${key} ${dateFmt.format(r.date)}: ฿${money(r[key])}</title></circle>`);
+        });
+      });
+
+      svg.querySelectorAll("circle[data-tip]").forEach((point) => {
+        point.addEventListener("mousemove", (event) => {
+          const [company, date, amount] = point.dataset.tip.split("|");
+          tooltip.innerHTML = `${company} ${date}<strong>฿${amount}</strong>`;
+          const rect = tooltip.parentElement.getBoundingClientRect();
+          tooltip.style.left = `${event.clientX - rect.left}px`;
+          tooltip.style.top = `${event.clientY - rect.top}px`;
+          tooltip.classList.add("is-visible");
+        });
+        point.addEventListener("mouseleave", () => {
+          tooltip.classList.remove("is-visible");
+        });
+      });
+
+      document.getElementById("trendLegend").innerHTML = seriesKeys.map((key) => `
+        <span class="legend-item"><span class="dot" style="--c:${COLORS[key]}"></span>${key}</span>
+      `).join("");
+      document.getElementById("trendHint").textContent = `${fmt.format(rows.length)} วัน`;
+    }
+
+    function renderCompanies(adRows, googleAdRows) {
+      const totals = COMPANIES.map((company) => ({
+        company,
+        total: totalAdSpendForCompany(adRows, googleAdRows, company)
+      }));
+      const max = Math.max(1, ...totals.map((t) => t.total));
+      const totalAll = totals.reduce((sum, t) => sum + t.total, 0);
+      document.getElementById("companyHint").textContent = `฿${money(totalAll)}`;
+      document.getElementById("companyList").innerHTML = totals
+        .sort((a, b) => b.total - a.total)
+        .map((item) => {
+          const pct = totalAll ? Math.round(item.total / totalAll * 100) : 0;
+          const width = Math.round(item.total / max * 100);
+          return `
+            <article class="company-row">
+              <div class="company-code" style="--accent:${COLORS[item.company]}">${item.company}</div>
+              <div>
+                <div class="row-title"><span>${item.company}</span><span>${pct}%</span></div>
+                <div class="bar" style="--accent:${COLORS[item.company]}"><span style="--w:${width}%"></span></div>
+                <div class="row-sub">สัดส่วนจากค่าใช้จ่ายรวม FB Ads + Google Ads</div>
+              </div>
+              <div class="value">฿${money(item.total)}</div>
+            </article>
+          `;
+        }).join("");
+    }
+
+    function totalAdSpendForCompany(adRows, googleAdRows, company) {
+      const fbSpend = adRows
+        .filter((row) => row.account === company)
+        .reduce((sum, row) => sum + row.spend, 0);
+      const googleSpend = googleAdRows
+        .filter((row) => row.company === company)
+        .reduce((sum, row) => sum + row.spend, 0);
+      return fbSpend + googleSpend;
+    }
+
+    function renderChannels(rows) {
+      const section = document.getElementById("channelCards")?.closest(".section");
+      if (section) section.classList.add("is-hidden");
+    }
+
+    function channelChatTotal(rows, channel) {
+      return sumRows(rows.filter((r) => r.channel === channel), state.company);
+    }
+
+    function companyChatTotal(rows, channel, company) {
+      if (state.company !== "all" && state.company !== company) return 0;
+      return rows
+        .filter((r) => r.channel === channel)
+        .reduce((sum, row) => sum + (row[company] || 0), 0);
+    }
+
+    function renderAds(rows, chatRows) {
+      const section = document.getElementById("fbAdsSection");
+      if (state.channel === "LINE") {
+        section.classList.add("is-hidden");
+        return;
+      }
+      section.classList.remove("is-hidden");
+
+      const spend = rows.reduce((sum, r) => sum + r.spend, 0);
+      const clicks = rows.reduce((sum, r) => sum + r.clicks, 0);
+      const cpc = clicks ? spend / clicks : 0;
+      const chatTotal = channelChatTotal(chatRows, "FB");
+      const costPerChat = chatTotal ? spend / chatTotal : 0;
+      const latest = rows.map((r) => r.date).sort((a, b) => a - b).pop();
+      document.getElementById("adsHint").textContent = latest ? `ล่าสุด ${dateFmt.format(latest)}` : "ไม่มีข้อมูล";
+
+      const cards = [
+        { label: "ค่าใช้จ่าย (฿)", value: money(spend), foot: "รวมตามช่วงข้อมูล", accent: COLORS.FB },
+        { label: "Clicks", value: fmt.format(Math.round(clicks)), foot: "จำนวนคลิกทั้งหมด", accent: COLORS.green },
+        { label: "CPC (฿)", value: money(cpc), foot: "ค่าเฉลี่ยถ่วงน้ำหนัก", accent: COLORS.amber },
+        { label: "FB Chat", value: fmt.format(chatTotal), foot: "จำนวนแชททั้งหมด", accent: COLORS.FB },
+        { label: "฿/Chat", value: chatTotal ? money(costPerChat) : "–", foot: "ค่าเฉลี่ยต่อแชท", accent: COLORS.violet }
+      ];
+
+      const breakdown = COMPANIES.map((company) => {
+        const companyRows = rows.filter((r) => r.account === company);
+        const companySpend = companyRows.reduce((sum, r) => sum + r.spend, 0);
+        const companyClicks = companyRows.reduce((sum, r) => sum + r.clicks, 0);
+        const companyCpc = companyClicks ? companySpend / companyClicks : 0;
+        const companyChat = companyChatTotal(chatRows, "FB", company);
+        const companyCostPerChat = companyChat ? companySpend / companyChat : 0;
+        return { company, spend: companySpend, clicks: companyClicks, cpc: companyCpc, chat: companyChat, costPerChat: companyCostPerChat };
+      });
+
+      document.getElementById("fbAdsCards").innerHTML = cards.map((item) => `
+        <article class="card mini" style="border-top:4px solid ${item.accent}">
+          <div class="mini-title">${item.label}</div>
+          <div class="mini-value">${item.value}</div>
+          <div class="row-sub">${item.foot}</div>
+        </article>
+      `).join("") + `
+        <article class="card ads-breakdown">
+          ${breakdown.map((item) => `
+            <div class="ads-company-line">
+              <div class="company-code" style="--accent:${COLORS[item.company]}">${item.company}</div>
+              <div class="ads-metric"><span>ค่าใช้จ่าย</span><strong>${money(item.spend)}</strong></div>
+              <div class="ads-metric"><span>Clicks</span><strong>${fmt.format(Math.round(item.clicks))}</strong></div>
+              <div class="ads-metric"><span>CPC</span><strong>${money(item.cpc)}</strong></div>
+              <div class="ads-metric"><span>Chat</span><strong>${fmt.format(item.chat)}</strong></div>
+              <div class="ads-metric"><span>฿/Chat</span><strong>${item.chat ? money(item.costPerChat) : "–"}</strong></div>
+            </div>
+          `).join("")}
+        </article>
+      `;
+    }
+
+    function renderGoogleAds(rows, chatRows) {
+      const section = document.getElementById("googleAdsSection");
+      if (state.channel === "FB") {
+        section.classList.add("is-hidden");
+        return;
+      }
+      section.classList.remove("is-hidden");
+
+      const spend = rows.reduce((sum, r) => sum + r.spend, 0);
+      const clicks = rows.reduce((sum, r) => sum + r.clicks, 0);
+      const cpc = clicks ? spend / clicks : 0;
+      const chatTotal = channelChatTotal(chatRows, "LINE");
+      const costPerChat = chatTotal ? spend / chatTotal : 0;
+      const latest = rows.map((r) => r.date).sort((a, b) => a - b).pop();
+      document.getElementById("googleAdsHint").textContent = latest ? `ล่าสุด ${dateFmt.format(latest)}` : "ไม่มีข้อมูล";
+
+      const cards = [
+        { label: "ค่าใช้จ่าย (฿)", value: money(spend), foot: "รวมตามช่วงข้อมูล", accent: COLORS.LINE },
+        { label: "Clicks", value: fmt.format(Math.round(clicks)), foot: "จำนวนคลิกทั้งหมด", accent: COLORS.green },
+        { label: "CPC (฿)", value: money(cpc), foot: "ค่าเฉลี่ยถ่วงน้ำหนัก", accent: COLORS.amber },
+        { label: "LINE Chat", value: fmt.format(chatTotal), foot: "จำนวนแชททั้งหมด", accent: COLORS.LINE },
+        { label: "฿/Chat", value: chatTotal ? money(costPerChat) : "–", foot: "ค่าเฉลี่ยต่อแชท", accent: COLORS.violet }
+      ];
+
+      const breakdown = COMPANIES.map((company) => {
+        const companyRows = rows.filter((r) => r.company === company);
+        const companySpend = companyRows.reduce((sum, r) => sum + r.spend, 0);
+        const companyClicks = companyRows.reduce((sum, r) => sum + r.clicks, 0);
+        const companyCpc = companyClicks ? companySpend / companyClicks : 0;
+        const companyChat = companyChatTotal(chatRows, "LINE", company);
+        const companyCostPerChat = companyChat ? companySpend / companyChat : 0;
+        return { company, spend: companySpend, clicks: companyClicks, cpc: companyCpc, chat: companyChat, costPerChat: companyCostPerChat };
+      });
+
+      document.getElementById("googleAdsCards").innerHTML = cards.map((item) => `
+        <article class="card mini" style="border-top:4px solid ${item.accent}">
+          <div class="mini-title">${item.label}</div>
+          <div class="mini-value">${item.value}</div>
+          <div class="row-sub">${item.foot}</div>
+        </article>
+      `).join("") + `
+        <article class="card ads-breakdown">
+          ${breakdown.map((item) => `
+            <div class="ads-company-line">
+              <div class="company-code" style="--accent:${COLORS[item.company]}">${item.company}</div>
+              <div class="ads-metric"><span>ค่าใช้จ่าย</span><strong>${money(item.spend)}</strong></div>
+              <div class="ads-metric"><span>Clicks</span><strong>${fmt.format(Math.round(item.clicks))}</strong></div>
+              <div class="ads-metric"><span>CPC</span><strong>${money(item.cpc)}</strong></div>
+              <div class="ads-metric"><span>Chat</span><strong>${fmt.format(item.chat)}</strong></div>
+              <div class="ads-metric"><span>฿/Chat</span><strong>${item.chat ? money(item.costPerChat) : "–"}</strong></div>
+            </div>
+          `).join("")}
+        </article>
+      `;
+    }
+
+    function money(value) {
+      return new Intl.NumberFormat("th-TH", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      }).format(Number.isFinite(value) ? value : 0);
+    }
+
+    function renderTable(rows, adRows, callRows, googleAdRows) {
+      const adsByDate = new Map();
+      adRows.forEach((row) => {
+        if (!adsByDate.has(row.iso)) {
+          adsByDate.set(row.iso, {});
+        }
+        const dateBucket = adsByDate.get(row.iso);
+        if (!dateBucket[row.account]) {
+          dateBucket[row.account] = { spend: 0, clicks: 0 };
+        }
+        const item = dateBucket[row.account];
+        item.spend += row.spend;
+        item.clicks += row.clicks;
+      });
+
+      const callsByDate = new Map();
+      callRows.forEach((row) => {
+        if (!callsByDate.has(row.iso)) {
+          callsByDate.set(row.iso, {});
+        }
+        const dateBucket = callsByDate.get(row.iso);
+        dateBucket[row.company] = (dateBucket[row.company] || 0) + row.calls;
+      });
+
+      const googleAdsByDate = new Map();
+      googleAdRows.forEach((row) => {
+        if (!googleAdsByDate.has(row.iso)) {
+          googleAdsByDate.set(row.iso, {});
+        }
+        const dateBucket = googleAdsByDate.get(row.iso);
+        if (!dateBucket[row.company]) {
+          dateBucket[row.company] = { spend: 0, clicks: 0 };
+        }
+        const item = dateBucket[row.company];
+        item.spend += row.spend;
+        item.clicks += row.clicks;
+      });
+
+      const chatRows = rows
+        .filter((r) => state.company === "all" || r[state.company] > 0)
+        .sort((a, b) => b.date - a.date || a.channel.localeCompare(b.channel));
+
+      const dates = [...new Set([
+        ...chatRows.map((r) => r.iso),
+        ...adRows.map((r) => r.iso),
+        ...callRows.map((r) => r.iso),
+        ...googleAdRows.map((r) => r.iso)
+      ])].sort().reverse();
+
+      const bodyRows = [];
+      dates.forEach((iso) => {
+        const dateChatRows = chatRows.filter((r) => r.iso === iso);
+        const fbChat = dateChatRows.find((r) => r.channel === "FB");
+        const lineChat = dateChatRows.find((r) => r.channel === "LINE");
+        const dateAds = adsByDate.get(iso);
+        const dateGoogleAds = googleAdsByDate.get(iso);
+        const date = parseIso(iso);
+        const dateRows = [];
+
+        if (state.channel !== "LINE") {
+          dateRows.push({
+            type: "ads",
+            channel: "FB Ads",
+            date,
+            ads: dateAds
+          });
+        }
+
+        if (state.channel !== "LINE") {
+          dateRows.push({
+            type: "chat",
+            channel: "FB Chat",
+            date,
+            row: fbChat,
+            fbAds: dateAds,
+            googleAds: null
+          });
+        }
+
+        if (state.channel !== "FB") {
+          dateRows.push({
+            type: "googleAds",
+            channel: "Google Ads",
+            date,
+            ads: dateGoogleAds
+          });
+        }
+
+        if (state.channel !== "FB") {
+          dateRows.push({
+            type: "chat",
+            channel: "LINE Chat",
+            date,
+            row: lineChat,
+            fbAds: null,
+            googleAds: dateGoogleAds
+          });
+        }
+
+        if (state.channel === "all") {
+          dateRows.push({
+            type: "call",
+            channel: "TEL Call",
+            date,
+            calls: callsByDate.get(iso)
+          });
+        }
+
+        dateRows.forEach((row, index) => {
+          bodyRows.push(renderGroupedTableRow(row, index === 0));
+        });
+      });
+
+      document.getElementById("tableHint").textContent = `${fmt.format(bodyRows.length)} แถว`;
+      document.getElementById("dailyTable").innerHTML = bodyRows.join("");
+    }
+
+    function renderGroupedTableRow(item, isFirstOfDate) {
+      const dateCell = isFirstOfDate
+        ? `<td class="date-cell">${dateFmt.format(item.date)}</td>`
+        : `<td class="date-cell date-spacer" aria-hidden="true">&nbsp;</td>`;
+      if (item.type === "ads") {
+        return `
+          <tr class="${rowClass(isFirstOfDate, "fb-ads")}">
+            ${dateCell}
+            <td class="channel-cell">${channelSourceHtml("FB Ads", SOURCE_LINKS.fbAds)}</td>
+            ${COMPANIES.map((company) => `<td>${formatAdCell(item.ads?.[company])}</td>`).join("")}
+            <td class="total-cell">${formatAdCell(totalAds(item.ads))}</td>
+          </tr>
+        `;
+      }
+
+      if (item.type === "googleAds") {
+        return `
+          <tr class="${rowClass(isFirstOfDate, "google-ads")}">
+            ${dateCell}
+            <td class="channel-cell">${channelSourceHtml("Google Ads", SOURCE_LINKS.googleAds)}</td>
+            ${COMPANIES.map((company) => `<td>${formatAdCell(item.ads?.[company])}</td>`).join("")}
+            <td class="total-cell">${formatAdCell(totalAds(item.ads))}</td>
+          </tr>
+        `;
+      }
+
+      if (item.type === "call") {
+        return `
+          <tr class="${rowClass(isFirstOfDate, "tel-call")}">
+            ${dateCell}
+            <td class="channel-cell">${channelSourceHtml("TEL Call", SOURCE_LINKS.telCall)}</td>
+            ${renderCallCells(item.calls)}
+          </tr>
+        `;
+      }
+
+      const chatType = item.channel.startsWith("FB") ? "fb-chat" : "line-chat";
+      const sourceLinks = item.channel.startsWith("FB") ? SOURCE_LINKS.fbChat : SOURCE_LINKS.lineChat;
+      return `
+        <tr class="${rowClass(isFirstOfDate, chatType)}">
+          ${dateCell}
+          <td class="channel-cell">${channelSourceHtml(item.channel, sourceLinks)}</td>
+          ${renderChatCells(item)}
+        </tr>
+      `;
+    }
+
+    function channelSourceHtml(label, links) {
+      const linkHtml = links.map((link) => (
+        `<a href="${link.url}" target="_blank" rel="noreferrer" title="เปิดแหล่งข้อมูล ${link.label}">${link.label}</a>`
+      )).join("");
+      return `<span class="channel-label">${label}</span><span class="source-links">${linkHtml}</span>`;
+    }
+
+    function renderChatCells(item) {
+      if (!item.row) {
+        return `${COMPANIES.map(() => `<td class="chat-cell"></td>`).join("")}<td class="total-cell"></td>`;
+      }
+      const chatAds = adsForChat(item);
+      const cells = COMPANIES.map((company) => {
+        const count = item.row[company];
+        const avg = averageSpendPerChat(chatAds?.[company], count);
+        return `<td class="chat-cell">${fmt.format(count)}${formatAverageLine(avg)}</td>`;
+      }).join("");
+      const totalAvg = averageSpendPerChat(totalAds(chatAds), item.row.total);
+      return `${cells}<td class="total-cell">${fmt.format(item.row.total)}${formatAverageLine(totalAvg)}</td>`;
+    }
+
+    function adsForChat(item) {
+      if (item.channel.startsWith("FB")) return item.fbAds;
+      if (item.channel.startsWith("LINE")) return item.googleAds;
+      return null;
+    }
+
+    function averageSpendPerChat(ads, chatCount) {
+      if (!ads || !chatCount) return null;
+      return ads.spend / chatCount;
+    }
+
+    function formatAverageLine(value) {
+      return value == null ? "" : `<small>${money(value)}</small>`;
+    }
+
+    function rowClass(isFirstOfDate, type) {
+      return `${isFirstOfDate ? "group-divider" : "sub-divider"} row-${type}`;
+    }
+
+    function renderCallCells(calls) {
+      if (!calls) {
+        return `${COMPANIES.map(() => `<td class="chat-cell"></td>`).join("")}<td class="total-cell"></td>`;
+      }
+      const values = COMPANIES.map((company) => calls?.[company] || 0);
+      const total = values.reduce((sum, value) => sum + value, 0);
+      return `
+        ${values.map((value) => `<td class="chat-cell">${value ? fmt.format(value) : ""}</td>`).join("")}
+        <td class="total-cell">${fmt.format(total)}</td>
+      `;
+    }
+
+    function totalAds(ads) {
+      if (!ads) return null;
+      const total = { spend: 0, clicks: 0 };
+      COMPANIES.forEach((company) => {
+        if (!ads[company]) return;
+        total.spend += ads[company].spend;
+        total.clicks += ads[company].clicks;
+      });
+      return total.spend || total.clicks ? total : null;
+    }
+
+    function formatAdCell(ads) {
+      if (!ads) return "";
+      const cpc = ads.clicks ? ads.spend / ads.clicks : 0;
+      return `
+        <div class="ads-cell">
+          <strong>฿${money(ads.spend)}</strong>
+          <small>${fmt.format(Math.round(ads.clicks))} clicks</small>
+          <small>CPC ฿${money(cpc)}</small>
+        </div>
+      `;
+    }
+
+    function renderSource() {
+      document.getElementById("sourceNote").innerHTML = `
+        แหล่งข้อมูล: <a href="${SHEETS[0].url}" target="_blank" rel="noreferrer">สรุป_FB</a>
+        , <a href="${SHEETS[1].url}" target="_blank" rel="noreferrer">สรุป_Line</a>
+        และ <a href="${ADS_SHEET.url}" target="_blank" rel="noreferrer">📅 Daily All</a>.
+        นิยาม: ค่าในแต่ละวันคือจำนวนแชทตามบริษัท MHL, GFS, CAR และผลรวมจากชีตต้นทาง.
+        ส่วนข้อมูลโฆษณา FB ใช้ค่าใช้จ่าย, Clicks และ CPC โดย CPC รวมคำนวณจากค่าใช้จ่ายหารด้วย Clicks.
+        แถว Google Ads ใช้ข้อมูลจากไฟล์ Google_Ads_Combined.csv โดยรวมหลาย campaign เป็นรายวันแยกบริษัท.
+        แถว TEL Call ใช้ข้อมูลจากไฟล์ TEL-GFS.csv และ TEL-MHL+CAR.csv โดยจับบริษัทจากเบอร์ Local Party ที่กำหนดไว้.
+      `;
+    }
+
+    document.getElementById("companyFilter").addEventListener("change", (event) => {
+      state.company = event.target.value;
+      render();
+    });
+
+    document.getElementById("rangeFilter").addEventListener("change", (event) => {
+      state.range = event.target.value;
+      const customRange = document.getElementById("customRange");
+      if (state.range === "custom") {
+        const startInput = document.getElementById("customStart");
+        const endInput = document.getElementById("customEnd");
+        const dates = allSourceDates().sort();
+        const minIso = dates[0] || "";
+        const maxIso = dates[dates.length - 1] || state.selectedDate;
+        if (minIso) { startInput.min = minIso; endInput.min = minIso; }
+        if (maxIso) { startInput.max = maxIso; endInput.max = maxIso; }
+        if (!state.customEnd) {
+          state.customEnd = maxIso;
+          endInput.value = maxIso;
+        }
+        if (!state.customStart) {
+          const latest = parseIso(maxIso);
+          const monthStart = latest ? isoDate(new Date(latest.getFullYear(), latest.getMonth(), 1)) : minIso;
+          state.customStart = monthStart;
+          startInput.value = monthStart;
+        }
+        customRange.classList.remove("is-hidden");
+      } else {
+        customRange.classList.add("is-hidden");
+      }
+      render();
+    });
+
+    document.getElementById("customStart").addEventListener("change", (event) => {
+      state.customStart = event.target.value;
+      render();
+    });
+
+    document.getElementById("customEnd").addEventListener("change", (event) => {
+      state.customEnd = event.target.value;
+      render();
+    });
+
+    document.getElementById("channelFilter").addEventListener("click", (event) => {
+      const button = event.target.closest("button[data-value]");
+      if (!button) return;
+      document.querySelectorAll("#channelFilter button").forEach((btn) => btn.classList.remove("active"));
+      button.classList.add("active");
+      state.channel = button.dataset.value;
+      render();
+    });
+
+    document.getElementById("refreshButton").addEventListener("click", () => {
+      loadData(true);
+    });
+
+    document.getElementById("tableToggle").addEventListener("click", (event) => {
+      const wrap = document.getElementById("tableWrap");
+      const button = event.currentTarget;
+      const isHidden = wrap.classList.toggle("is-hidden");
+      button.setAttribute("aria-expanded", String(!isHidden));
+      button.querySelector(".refresh-icon").textContent = isHidden ? "▸" : "▾";
+      button.lastChild.textContent = isHidden ? " แสดงตาราง" : " ซ่อนตาราง";
+    });
+
+    loadData();
+  </script>
+</body>
+</html>
