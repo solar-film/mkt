@@ -315,7 +315,7 @@
 
     #fbAdsCards,
     #googleAdsCards {
-      grid-template-columns: repeat(5, minmax(0, 1fr));
+      grid-template-columns: repeat(6, minmax(0, 1fr));
       gap: 12px;
     }
 
@@ -426,7 +426,7 @@
 
     .ads-company-line {
       display: grid;
-      grid-template-columns: 46px repeat(5, minmax(0, 1fr));
+      grid-template-columns: 46px repeat(6, minmax(0, 1fr));
       gap: 8px;
       align-items: center;
       padding: 9px 0;
@@ -514,6 +514,13 @@
 
     .channel-label {
       display: block;
+    }
+
+    .source-updated {
+      color: #69798b;
+      font-size: 13px;
+      font-weight: 700;
+      white-space: nowrap;
     }
 
     .source-links {
@@ -829,7 +836,7 @@
     };
 
     const SNAPSHOT = {
-      generatedAt: "2026-06-07T00:00:00+07:00",
+      generatedAt: "2026-06-08T00:00:00+07:00",
       rows: [
         { channel: "FB", month: "ม.ค. 26", day: "10/1/2026", MHL: 0, GFS: 1, CAR: 0, total: 1 },
         { channel: "FB", month: "เม.ย. 26", day: "4/4/2026", MHL: 0, GFS: 1, CAR: 0, total: 1 },
@@ -855,7 +862,8 @@
         { channel: "FB", month: "มิ.ย. 26", day: "4/6/2026", MHL: 1, GFS: 3, CAR: 14, total: 18 },
         { channel: "FB", month: "มิ.ย. 26", day: "5/6/2026", MHL: 3, GFS: 4, CAR: 17, total: 24 },
         { channel: "FB", month: "มิ.ย. 26", day: "6/6/2026", MHL: 2, GFS: 4, CAR: 21, total: 27 },
-        { channel: "FB", month: "มิ.ย. 26", day: "7/6/2026", MHL: 0, GFS: 0, CAR: 7, total: 7 },
+        { channel: "FB", month: "มิ.ย. 26", day: "7/6/2026", MHL: 1, GFS: 0, CAR: 16, total: 17 },
+        { channel: "FB", month: "มิ.ย. 26", day: "8/6/2026", MHL: 0, GFS: 1, CAR: 5, total: 6 },
         { channel: "LINE", month: "พ.ค. 26", day: "25/5/2026", MHL: 76, GFS: 72, CAR: 17, total: 165 },
         { channel: "LINE", month: "พ.ค. 26", day: "26/5/2026", MHL: 44, GFS: 47, CAR: 15, total: 106 },
         { channel: "LINE", month: "พ.ค. 26", day: "27/5/2026", MHL: 36, GFS: 35, CAR: 13, total: 84 },
@@ -869,7 +877,8 @@
         { channel: "LINE", month: "มิ.ย. 26", day: "4/6/2026", MHL: 35, GFS: 16, CAR: 9, total: 60 },
         { channel: "LINE", month: "มิ.ย. 26", day: "5/6/2026", MHL: 29, GFS: 32, CAR: 10, total: 71 },
         { channel: "LINE", month: "มิ.ย. 26", day: "6/6/2026", MHL: 26, GFS: 14, CAR: 4, total: 44 },
-        { channel: "LINE", month: "มิ.ย. 26", day: "7/6/2026", MHL: 2, GFS: 1, CAR: 3, total: 6 }
+        { channel: "LINE", month: "มิ.ย. 26", day: "7/6/2026", MHL: 2, GFS: 1, CAR: 3, total: 6 },
+        { channel: "LINE", month: "มิ.ย. 26", day: "8/6/2026", MHL: 18, GFS: 9, CAR: 3, total: 30 }
       ]
     };
 
@@ -976,6 +985,13 @@
         { label: "TEL-MHL+CAR.csv", url: LOCAL_FILES.calls[1] }
       ]
     };
+    const SOURCE_UPDATED_FALLBACK = {
+      fbAds: "2026-06-08T00:00:00+07:00",
+      fbChat: "2026-06-08T00:00:00+07:00",
+      googleAds: "2026-06-08T09:06:21+07:00",
+      lineChat: "2026-06-08T00:00:00+07:00",
+      telCall: "2026-06-08T09:02:14+07:00"
+    };
     const PHONE_COMPANY = {
       "66994565294": "MHL",
       "66972929488": "MHL",
@@ -994,6 +1010,7 @@
       googleAdRows: [],
       sourceMode: "snapshot",
       adSourceMode: "snapshot",
+      sourceUpdatedAt: { ...SOURCE_UPDATED_FALLBACK },
       channel: "all",
       company: "all",
       range: "this_month",
@@ -1004,6 +1021,14 @@
 
     const fmt = new Intl.NumberFormat("th-TH");
     const dateFmt = new Intl.DateTimeFormat("th-TH", { day: "numeric", month: "short", year: "2-digit" });
+    const sourceDateTimeFmt = new Intl.DateTimeFormat("th-TH", {
+      day: "numeric",
+      month: "short",
+      year: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false
+    });
 
     function parseThaiDate(value) {
       if (!value) return null;
@@ -1028,6 +1053,15 @@
 
     function cleanCell(value) {
       return String(value ?? "").replace(/^"+|"+$/g, "").trim();
+    }
+
+    function setSourceUpdatedAt(key, value) {
+      const date = value instanceof Date ? value : new Date(value);
+      if (!key || Number.isNaN(date.getTime())) return;
+      const current = state.sourceUpdatedAt[key] ? new Date(state.sourceUpdatedAt[key]) : null;
+      if (!current || date > current) {
+        state.sourceUpdatedAt[key] = date.toISOString();
+      }
     }
 
     function parseCsv(text) {
@@ -1065,10 +1099,11 @@
       return rows.slice(1).map((values) => Object.fromEntries(headers.map((header, index) => [header, cleanCell(values[index])])));
     }
 
-    async function loadLocalCsv(path) {
+    async function loadLocalCsv(path, sourceKey) {
       const url = `${encodeURI(path)}?v=${Date.now()}`;
       const response = await fetch(url, { cache: "no-store" });
       if (!response.ok) throw new Error(`load ${path}`);
+      setSourceUpdatedAt(sourceKey, response.headers.get("last-modified"));
       return parseCsv(await response.text());
     }
 
@@ -1078,7 +1113,7 @@
     }
 
     async function loadGoogleAdsCsv() {
-      const rows = await loadLocalCsv(LOCAL_FILES.googleAds);
+      const rows = await loadLocalCsv(LOCAL_FILES.googleAds, "googleAds");
       return rows.map((row) => ({
         day: row["วัน"],
         company: companyFromGoogleSource(row),
@@ -1093,7 +1128,7 @@
     }
 
     async function loadCallCsvs() {
-      const files = await Promise.all(LOCAL_FILES.calls.map(loadLocalCsv));
+      const files = await Promise.all(LOCAL_FILES.calls.map((path) => loadLocalCsv(path, "telCall")));
       const buckets = new Map();
       files.flat().forEach((row) => {
         const phone = normalizePhone(row["Local Party"]);
@@ -1224,7 +1259,7 @@
 
         const script = document.createElement("script");
         const query = encodeURIComponent("select A,B,C,D,E,F");
-        script.src = `https://docs.google.com/spreadsheets/d/${sheet.id}/gviz/tq?gid=${sheet.gid}&headers=2&tq=${query}&tqx=out:json;responseHandler:${cb}`;
+        script.src = `https://docs.google.com/spreadsheets/d/${sheet.id}/gviz/tq?gid=${sheet.gid}&headers=2&tq=${query}&tqx=out:json;responseHandler:${cb}&cacheBust=${Date.now()}`;
         script.onerror = () => {
           cleanup();
           reject(new Error("network"));
@@ -1258,7 +1293,7 @@
 
         const script = document.createElement("script");
         const query = encodeURIComponent("select A,B,C,F,G");
-        script.src = `https://docs.google.com/spreadsheets/d/${ADS_SHEET.id}/gviz/tq?gid=${ADS_SHEET.gid}&headers=1&tq=${query}&tqx=out:json;responseHandler:${cb}`;
+        script.src = `https://docs.google.com/spreadsheets/d/${ADS_SHEET.id}/gviz/tq?gid=${ADS_SHEET.gid}&headers=1&tq=${query}&tqx=out:json;responseHandler:${cb}&cacheBust=${Date.now()}`;
         script.onerror = () => {
           cleanup();
           reject(new Error("network"));
@@ -1280,6 +1315,40 @@
       const snapshotAds = ADS_SNAPSHOT.rows.map(normalizeAdRow).filter((r) => r.date);
       state.callRows = CALL_SNAPSHOT.rows.map(normalizeCallRow).filter((r) => r.date);
       state.googleAdRows = GOOGLE_ADS_SNAPSHOT.rows.map(normalizeGoogleAdRow).filter((r) => r.date);
+      const checkedAt = new Date().toISOString();
+      state.sourceUpdatedAt = {
+        ...SOURCE_UPDATED_FALLBACK,
+        fbAds: checkedAt,
+        fbChat: checkedAt,
+        lineChat: checkedAt
+      };
+
+      const sheetResultsTask = Promise.all(SHEETS.map(async (sheet) => {
+        try {
+          const liveRows = await loadSheet(sheet);
+          if (!liveRows.length) throw new Error("empty");
+          setSourceUpdatedAt(sheet.channel === "FB" ? "fbChat" : "lineChat", new Date());
+          return { mode: "live", rows: liveRows };
+        } catch (err) {
+          return {
+            mode: "snapshot",
+            rows: snapshotRows.filter((row) => row.channel === sheet.channel)
+          };
+        }
+      }));
+      const adRowsTask = loadAdSheet()
+        .then((liveAds) => {
+          if (!liveAds.length) throw new Error("empty");
+          setSourceUpdatedAt("fbAds", new Date());
+          return {
+            mode: "live",
+            rows: liveAds.sort((a, b) => a.date - b.date || a.account.localeCompare(b.account))
+          };
+        })
+        .catch(() => ({
+          mode: "snapshot",
+          rows: snapshotAds.sort((a, b) => a.date - b.date || a.account.localeCompare(b.account))
+        }));
 
       try {
         const localCalls = await loadCallCsvs();
@@ -1299,18 +1368,7 @@
         // Static file:// pages cannot read local CSV; keep the embedded fallback.
       }
 
-      const sheetResults = await Promise.all(SHEETS.map(async (sheet) => {
-        try {
-          const liveRows = await loadSheet(sheet);
-          if (!liveRows.length) throw new Error("empty");
-          return { mode: "live", rows: liveRows };
-        } catch (err) {
-          return {
-            mode: "snapshot",
-            rows: snapshotRows.filter((row) => row.channel === sheet.channel)
-          };
-        }
-      }));
+      const sheetResults = await sheetResultsTask;
       state.rows = sheetResults
         .flatMap((result) => result.rows)
         .sort((a, b) => a.date - b.date || a.channel.localeCompare(b.channel));
@@ -1320,15 +1378,9 @@
           ? "mixed"
           : "snapshot";
 
-      try {
-        const liveAds = await loadAdSheet();
-        if (!liveAds.length) throw new Error("empty");
-        state.adRows = liveAds.sort((a, b) => a.date - b.date || a.account.localeCompare(b.account));
-        state.adSourceMode = "live";
-      } catch (err) {
-        state.adRows = snapshotAds.sort((a, b) => a.date - b.date || a.account.localeCompare(b.account));
-        state.adSourceMode = "snapshot";
-      }
+      const adRowsResult = await adRowsTask;
+      state.adRows = adRowsResult.rows;
+      state.adSourceMode = adRowsResult.mode;
       setDefaultDate();
       render();
       if (refreshButton) {
@@ -1490,8 +1542,8 @@
       renderTrend(spendTrendRows);
       renderCompanies(adRows, googleAdRows);
       renderChannels(rows);
-      renderAds(adRows, rows);
-      renderGoogleAds(googleAdRows, rows);
+      renderAds(adRows, rows, callRows);
+      renderGoogleAds(googleAdRows, rows, callRows);
       renderTable(rows, adRows, callRows, googleAdRows);
       renderSource();
     }
@@ -1624,7 +1676,18 @@
         .reduce((sum, row) => sum + (row[company] || 0), 0);
     }
 
-    function renderAds(rows, chatRows) {
+    function callTotal(rows) {
+      return rows.reduce((sum, row) => sum + (row.calls || 0), 0);
+    }
+
+    function companyCallTotal(rows, company) {
+      if (state.company !== "all" && state.company !== company) return 0;
+      return rows
+        .filter((row) => row.company === company)
+        .reduce((sum, row) => sum + (row.calls || 0), 0);
+    }
+
+    function renderAds(rows, chatRows, callRows) {
       const section = document.getElementById("fbAdsSection");
       if (state.channel === "LINE") {
         section.classList.add("is-hidden");
@@ -1636,6 +1699,7 @@
       const clicks = rows.reduce((sum, r) => sum + r.clicks, 0);
       const cpc = clicks ? spend / clicks : 0;
       const chatTotal = channelChatTotal(chatRows, "FB");
+      const telTotal = callTotal(callRows);
       const costPerChat = chatTotal ? spend / chatTotal : 0;
       const latest = rows.map((r) => r.date).sort((a, b) => a - b).pop();
       document.getElementById("adsHint").textContent = latest ? `ล่าสุด ${dateFmt.format(latest)}` : "ไม่มีข้อมูล";
@@ -1645,7 +1709,8 @@
         { label: "Clicks", value: fmt.format(Math.round(clicks)), foot: "จำนวนคลิกทั้งหมด", accent: COLORS.green },
         { label: "CPC (฿)", value: money(cpc), foot: "ค่าเฉลี่ยถ่วงน้ำหนัก", accent: COLORS.amber },
         { label: "FB Chat", value: fmt.format(chatTotal), foot: "จำนวนแชททั้งหมด", accent: COLORS.FB },
-        { label: "฿/Chat", value: chatTotal ? money(costPerChat) : "–", foot: "ค่าเฉลี่ยต่อแชท", accent: COLORS.violet }
+        { label: "฿/Chat", value: chatTotal ? money(costPerChat) : "–", foot: "ค่าเฉลี่ยต่อแชท", accent: COLORS.violet },
+        { label: "TEL Call", value: fmt.format(telTotal), foot: "จำนวนโทรทั้งหมด", accent: COLORS.violet }
       ];
 
       const breakdown = COMPANIES.map((company) => {
@@ -1654,8 +1719,9 @@
         const companyClicks = companyRows.reduce((sum, r) => sum + r.clicks, 0);
         const companyCpc = companyClicks ? companySpend / companyClicks : 0;
         const companyChat = companyChatTotal(chatRows, "FB", company);
+        const companyTel = companyCallTotal(callRows, company);
         const companyCostPerChat = companyChat ? companySpend / companyChat : 0;
-        return { company, spend: companySpend, clicks: companyClicks, cpc: companyCpc, chat: companyChat, costPerChat: companyCostPerChat };
+        return { company, spend: companySpend, clicks: companyClicks, cpc: companyCpc, chat: companyChat, tel: companyTel, costPerChat: companyCostPerChat };
       });
 
       document.getElementById("fbAdsCards").innerHTML = cards.map((item) => `
@@ -1674,13 +1740,14 @@
               <div class="ads-metric"><span>CPC</span><strong>${money(item.cpc)}</strong></div>
               <div class="ads-metric"><span>Chat</span><strong>${fmt.format(item.chat)}</strong></div>
               <div class="ads-metric"><span>฿/Chat</span><strong>${item.chat ? money(item.costPerChat) : "–"}</strong></div>
+              <div class="ads-metric"><span>Tel</span><strong>${fmt.format(item.tel)}</strong></div>
             </div>
           `).join("")}
         </article>
       `;
     }
 
-    function renderGoogleAds(rows, chatRows) {
+    function renderGoogleAds(rows, chatRows, callRows) {
       const section = document.getElementById("googleAdsSection");
       if (state.channel === "FB") {
         section.classList.add("is-hidden");
@@ -1692,6 +1759,7 @@
       const clicks = rows.reduce((sum, r) => sum + r.clicks, 0);
       const cpc = clicks ? spend / clicks : 0;
       const chatTotal = channelChatTotal(chatRows, "LINE");
+      const telTotal = callTotal(callRows);
       const costPerChat = chatTotal ? spend / chatTotal : 0;
       const latest = rows.map((r) => r.date).sort((a, b) => a - b).pop();
       document.getElementById("googleAdsHint").textContent = latest ? `ล่าสุด ${dateFmt.format(latest)}` : "ไม่มีข้อมูล";
@@ -1701,7 +1769,8 @@
         { label: "Clicks", value: fmt.format(Math.round(clicks)), foot: "จำนวนคลิกทั้งหมด", accent: COLORS.green },
         { label: "CPC (฿)", value: money(cpc), foot: "ค่าเฉลี่ยถ่วงน้ำหนัก", accent: COLORS.amber },
         { label: "LINE Chat", value: fmt.format(chatTotal), foot: "จำนวนแชททั้งหมด", accent: COLORS.LINE },
-        { label: "฿/Chat", value: chatTotal ? money(costPerChat) : "–", foot: "ค่าเฉลี่ยต่อแชท", accent: COLORS.violet }
+        { label: "฿/Chat", value: chatTotal ? money(costPerChat) : "–", foot: "ค่าเฉลี่ยต่อแชท", accent: COLORS.violet },
+        { label: "TEL Call", value: fmt.format(telTotal), foot: "จำนวนโทรทั้งหมด", accent: COLORS.violet }
       ];
 
       const breakdown = COMPANIES.map((company) => {
@@ -1710,8 +1779,9 @@
         const companyClicks = companyRows.reduce((sum, r) => sum + r.clicks, 0);
         const companyCpc = companyClicks ? companySpend / companyClicks : 0;
         const companyChat = companyChatTotal(chatRows, "LINE", company);
+        const companyTel = companyCallTotal(callRows, company);
         const companyCostPerChat = companyChat ? companySpend / companyChat : 0;
-        return { company, spend: companySpend, clicks: companyClicks, cpc: companyCpc, chat: companyChat, costPerChat: companyCostPerChat };
+        return { company, spend: companySpend, clicks: companyClicks, cpc: companyCpc, chat: companyChat, tel: companyTel, costPerChat: companyCostPerChat };
       });
 
       document.getElementById("googleAdsCards").innerHTML = cards.map((item) => `
@@ -1730,6 +1800,7 @@
               <div class="ads-metric"><span>CPC</span><strong>${money(item.cpc)}</strong></div>
               <div class="ads-metric"><span>Chat</span><strong>${fmt.format(item.chat)}</strong></div>
               <div class="ads-metric"><span>฿/Chat</span><strong>${item.chat ? money(item.costPerChat) : "–"}</strong></div>
+              <div class="ads-metric"><span>Tel</span><strong>${fmt.format(item.tel)}</strong></div>
             </div>
           `).join("")}
         </article>
@@ -1868,7 +1939,7 @@
         return `
           <tr class="${rowClass(isFirstOfDate, "fb-ads")}">
             ${dateCell}
-            <td class="channel-cell">${channelSourceHtml("FB Ads", SOURCE_LINKS.fbAds)}</td>
+            <td class="channel-cell">${channelSourceHtml("FB Ads", SOURCE_LINKS.fbAds, "fbAds")}</td>
             ${COMPANIES.map((company) => `<td>${formatAdCell(item.ads?.[company])}</td>`).join("")}
             <td class="total-cell">${formatAdCell(totalAds(item.ads))}</td>
           </tr>
@@ -1879,7 +1950,7 @@
         return `
           <tr class="${rowClass(isFirstOfDate, "google-ads")}">
             ${dateCell}
-            <td class="channel-cell">${channelSourceHtml("Google Ads", SOURCE_LINKS.googleAds)}</td>
+            <td class="channel-cell">${channelSourceHtml("Google Ads", SOURCE_LINKS.googleAds, "googleAds")}</td>
             ${COMPANIES.map((company) => `<td>${formatAdCell(item.ads?.[company])}</td>`).join("")}
             <td class="total-cell">${formatAdCell(totalAds(item.ads))}</td>
           </tr>
@@ -1890,7 +1961,7 @@
         return `
           <tr class="${rowClass(isFirstOfDate, "tel-call")}">
             ${dateCell}
-            <td class="channel-cell">${channelSourceHtml("TEL Call", SOURCE_LINKS.telCall)}</td>
+            <td class="channel-cell">${channelSourceHtml("TEL Call", SOURCE_LINKS.telCall, "telCall")}</td>
             ${renderCallCells(item.calls)}
           </tr>
         `;
@@ -1898,20 +1969,30 @@
 
       const chatType = item.channel.startsWith("FB") ? "fb-chat" : "line-chat";
       const sourceLinks = item.channel.startsWith("FB") ? SOURCE_LINKS.fbChat : SOURCE_LINKS.lineChat;
+      const sourceKey = item.channel.startsWith("FB") ? "fbChat" : "lineChat";
       return `
         <tr class="${rowClass(isFirstOfDate, chatType)}">
           ${dateCell}
-          <td class="channel-cell">${channelSourceHtml(item.channel, sourceLinks)}</td>
+          <td class="channel-cell">${channelSourceHtml(item.channel, sourceLinks, sourceKey)}</td>
           ${renderChatCells(item)}
         </tr>
       `;
     }
 
-    function channelSourceHtml(label, links) {
+    function channelSourceHtml(label, links, sourceKey) {
       const linkHtml = links.map((link) => (
         `<a href="${link.url}" target="_blank" rel="noreferrer" title="เปิดแหล่งข้อมูล ${link.label}">${link.label}</a>`
       )).join("");
-      return `<span class="channel-label">${label}</span><span class="source-links">${linkHtml}</span>`;
+      return `<span class="channel-label">${label}${formatSourceUpdated(sourceKey)}</span><span class="source-links">${linkHtml}</span>`;
+    }
+
+    function formatSourceUpdated(sourceKey) {
+      const raw = state.sourceUpdatedAt[sourceKey];
+      const date = raw ? new Date(raw) : null;
+      if (!date || Number.isNaN(date.getTime())) return "";
+      const label = sourceKey === "googleAds" || sourceKey === "telCall" ? "อัปเดต" : "ตรวจล่าสุด";
+      const text = sourceDateTimeFmt.format(date).replace(/\s*น\.$/, "");
+      return ` <span class="source-updated">(${label} ${text})</span>`;
     }
 
     function renderChatCells(item) {
