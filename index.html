@@ -255,6 +255,56 @@
       display: block;
     }
 
+    .channel-trend-card {
+      padding: 10px 12px 12px;
+    }
+
+    #channelTrendChart {
+      height: 420px;
+    }
+
+    .company-trend-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 12px;
+    }
+
+    .company-trend-grid.is-single {
+      grid-template-columns: 1fr;
+    }
+
+    .company-trend-card {
+      padding: 10px 12px 12px;
+      position: relative;
+      box-shadow: none;
+    }
+
+    .company-trend-head {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 4px;
+    }
+
+    .company-trend-head strong {
+      font-size: 15px;
+      line-height: 1.2;
+    }
+
+    .company-trend-head span {
+      color: var(--muted);
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    .company-trend-chart {
+      width: 100%;
+      height: 220px;
+      display: block;
+    }
+
     .chart-tooltip {
       position: absolute;
       z-index: 5;
@@ -295,6 +345,20 @@
       display: inline-flex;
       align-items: center;
       gap: 7px;
+    }
+
+    .legend-toggle {
+      border: 0;
+      background: transparent;
+      color: var(--muted);
+      cursor: pointer;
+      padding: 0;
+      font: inherit;
+    }
+
+    .legend-toggle.is-off {
+      opacity: .38;
+      text-decoration: line-through;
     }
 
     .dot {
@@ -654,7 +718,7 @@
     }
 
     @media (max-width: 920px) {
-      .topbar-inner, .toolbar, .grid, .split {
+      .topbar-inner, .toolbar, .grid, .split, .company-trend-grid {
         grid-template-columns: 1fr;
       }
 
@@ -762,6 +826,19 @@
 
         </aside>
       </div>
+
+      <section class="section" id="channelTrendSection">
+        <div class="section-head">
+          <h2>แนวโน้มช่องทางรายวัน</h2>
+          <span class="hint" id="channelTrendHint"></span>
+        </div>
+        <div class="card chart-card channel-trend-card">
+          <svg class="chart" id="channelTrendChart" role="img" aria-label="กราฟเปรียบเทียบแนวโน้มช่องทางรายวัน"></svg>
+          <div class="chart-tooltip" id="channelTrendTooltip" aria-hidden="true"></div>
+          <div class="legend" id="channelTrendLegend"></div>
+        </div>
+        <div class="company-trend-grid" id="companyTrendGrid"></div>
+      </section>
 
       <section class="section" id="fbAdsSection">
         <div class="section-head">
@@ -968,8 +1045,18 @@
       LINE: "#2e9f62",
       green: "#2e9f62",
       amber: "#c78916",
-      violet: "#5f63d8"
+      violet: "#5f63d8",
+      google: "#c78916",
+      tel: "#7c5ce6"
     };
+
+    const CHANNEL_TREND_SERIES = [
+      { key: "fbChat", label: "FB Chat", color: COLORS.FB, unit: "count", channelGroup: "FB" },
+      { key: "lineChat", label: "LINE Chat", color: COLORS.LINE, unit: "count", channelGroup: "LINE" },
+      { key: "telCall", label: "TEL Call", color: COLORS.tel, unit: "count", channelGroup: "all" },
+      { key: "fbAds", label: "FB Ads", color: COLORS.violet, unit: "money", channelGroup: "FB", dashed: true },
+      { key: "googleAds", label: "Google Ads", color: COLORS.google, unit: "money", channelGroup: "LINE", dashed: true }
+    ];
 
     const COMPANIES = ["MHL", "GFS", "CAR"];
     const LOCAL_FILES = {
@@ -1017,7 +1104,8 @@
       range: "this_month",
       selectedDate: "",
       customStart: "",
-      customEnd: ""
+      customEnd: "",
+      channelTrendVisible: {}
     };
 
     const fmt = new Intl.NumberFormat("th-TH");
@@ -1541,6 +1629,8 @@
       const spendTrendRows = groupAdSpendByDate(adRows, googleAdRows);
       renderStatus();
       renderTrend(spendTrendRows);
+      renderChannelTrend(groupChannelTrendByDate(rows, callRows, adRows, googleAdRows));
+      renderCompanyChannelTrends(groupChannelTrendByCompany(rows, callRows, adRows, googleAdRows));
       renderCompanies(adRows, googleAdRows);
       renderChannels(rows);
       renderAds(adRows, rows, callRows);
@@ -1622,6 +1712,334 @@
         <span class="legend-item"><span class="dot" style="--c:${COLORS[key]}"></span>${key}</span>
       `).join("");
       document.getElementById("trendHint").textContent = `${fmt.format(rows.length)} วัน`;
+    }
+
+    function groupChannelTrendByDate(chatRows, callRows, adRows, googleAdRows) {
+      const map = new Map();
+      const ensure = (iso, date) => {
+        if (!iso || !date) return null;
+        if (!map.has(iso)) {
+          map.set(iso, { iso, date, fbChat: 0, lineChat: 0, telCall: 0, fbAds: 0, googleAds: 0 });
+        }
+        return map.get(iso);
+      };
+
+      chatRows.forEach((row) => {
+        const item = ensure(row.iso, row.date);
+        if (!item) return;
+        const value = state.company === "all" ? row.total : row[state.company];
+        if (row.channel === "FB") item.fbChat += value || 0;
+        if (row.channel === "LINE") item.lineChat += value || 0;
+      });
+
+      callRows.forEach((row) => {
+        const item = ensure(row.iso, row.date);
+        if (!item) return;
+        item.telCall += row.calls || 0;
+      });
+
+      adRows.forEach((row) => {
+        const item = ensure(row.iso, row.date);
+        if (!item) return;
+        item.fbAds += row.spend || 0;
+      });
+
+      googleAdRows.forEach((row) => {
+        const item = ensure(row.iso, row.date);
+        if (!item) return;
+        item.googleAds += row.spend || 0;
+      });
+
+      return [...map.values()].sort((a, b) => a.date - b.date);
+    }
+
+    function groupChannelTrendByCompany(chatRows, callRows, adRows, googleAdRows) {
+      const companies = state.company === "all" ? COMPANIES : [state.company];
+      return companies.map((company) => ({
+        company,
+        rows: groupCompanyChannelTrendByDate(company, chatRows, callRows, adRows, googleAdRows)
+      }));
+    }
+
+    function groupCompanyChannelTrendByDate(company, chatRows, callRows, adRows, googleAdRows) {
+      const map = new Map();
+      const ensure = (iso, date) => {
+        if (!iso || !date) return null;
+        if (!map.has(iso)) {
+          map.set(iso, { iso, date, fbChat: 0, lineChat: 0, telCall: 0, fbAds: 0, googleAds: 0 });
+        }
+        return map.get(iso);
+      };
+
+      chatRows.forEach((row) => {
+        const item = ensure(row.iso, row.date);
+        if (!item) return;
+        const value = row[company] || 0;
+        if (row.channel === "FB") item.fbChat += value;
+        if (row.channel === "LINE") item.lineChat += value;
+      });
+
+      callRows.forEach((row) => {
+        if (row.company !== company) return;
+        const item = ensure(row.iso, row.date);
+        if (item) item.telCall += row.calls || 0;
+      });
+
+      adRows.forEach((row) => {
+        if (row.account !== company) return;
+        const item = ensure(row.iso, row.date);
+        if (item) item.fbAds += row.spend || 0;
+      });
+
+      googleAdRows.forEach((row) => {
+        if (row.company !== company) return;
+        const item = ensure(row.iso, row.date);
+        if (item) item.googleAds += row.spend || 0;
+      });
+
+      return [...map.values()].sort((a, b) => a.date - b.date);
+    }
+
+    function availableChannelTrendSeries(rows) {
+      return CHANNEL_TREND_SERIES.filter((series) => {
+        if (state.channel === "FB" && series.channelGroup === "LINE") return false;
+        if (state.channel === "LINE" && series.channelGroup === "FB") return false;
+        return rows.some((row) => row[series.key] > 0);
+      });
+    }
+
+    function activeChannelTrendSeries(rows) {
+      return availableChannelTrendSeries(rows).filter((series) => state.channelTrendVisible[series.key] !== false);
+    }
+
+    function renderChannelTrend(rows) {
+      const svg = document.getElementById("channelTrendChart");
+      const tooltip = document.getElementById("channelTrendTooltip");
+      const legend = document.getElementById("channelTrendLegend");
+      const hint = document.getElementById("channelTrendHint");
+      const bounds = svg.getBoundingClientRect();
+      const w = Math.max(900, Math.round(bounds.width || 900));
+      const h = Math.max(380, Math.round(bounds.height || 420));
+      const pad = { top: 12, right: 10, bottom: 40, left: 42 };
+      const chartW = w - pad.left - pad.right;
+      const chartH = h - pad.top - pad.bottom;
+      const availableSeries = availableChannelTrendSeries(rows);
+      const seriesList = activeChannelTrendSeries(rows);
+
+      svg.setAttribute("viewBox", `0 0 ${w} ${h}`);
+      svg.innerHTML = "";
+      tooltip?.classList.remove("is-visible");
+
+      if (!rows.length || !availableSeries.length) {
+        svg.innerHTML = `<text x="${w / 2}" y="${h / 2}" text-anchor="middle" fill="#667385" font-size="18">ไม่มีข้อมูลในตัวกรองนี้</text>`;
+        legend.innerHTML = "";
+        hint.textContent = "0 วัน";
+        return;
+      }
+
+      if (!seriesList.length) {
+        svg.innerHTML = `<text x="${w / 2}" y="${h / 2}" text-anchor="middle" fill="#667385" font-size="18">เลือกช่องทางจากคำอธิบายกราฟเพื่อแสดงข้อมูล</text>`;
+        legend.innerHTML = renderChannelTrendLegend(availableSeries);
+        bindChannelTrendLegend();
+        hint.textContent = `${fmt.format(rows.length)} วัน`;
+        return;
+      }
+
+      const normalized = new Map();
+      seriesList.forEach((series) => {
+        const max = Math.max(0, ...rows.map((row) => row[series.key] || 0));
+        normalized.set(series.key, { max, values: rows.map((row) => max ? ((row[series.key] || 0) / max) * 100 : 0) });
+      });
+
+      const x = (i) => pad.left + (rows.length === 1 ? chartW / 2 : (i / (rows.length - 1)) * chartW);
+      const y = (v) => pad.top + chartH - (v / 100) * chartH;
+      const grid = [];
+      for (let i = 0; i <= 4; i++) {
+        const value = i * 25;
+        const yy = y(value);
+        grid.push(`<line x1="${pad.left}" y1="${yy}" x2="${w - pad.right}" y2="${yy}" stroke="#d8e0ea" stroke-width="1"/>`);
+        grid.push(`<text x="${pad.left - 10}" y="${yy + 4}" text-anchor="end" fill="#667385" font-size="12">${value}</text>`);
+      }
+      svg.insertAdjacentHTML("beforeend", grid.join(""));
+
+      rows.forEach((row, i) => {
+        const showLabel = rows.length <= 14 || i === 0 || i === rows.length - 1 || i % Math.ceil(rows.length / 6) === 0;
+        if (showLabel) {
+          svg.insertAdjacentHTML("beforeend", `<text x="${x(i)}" y="${h - 12}" text-anchor="middle" fill="#667385" font-size="12">${dateFmt.format(row.date)}</text>`);
+        }
+      });
+
+      const barSeries = seriesList.filter((series) => series.mark === "bar");
+      const lineSeries = seriesList.filter((series) => series.mark !== "bar");
+      const bandWidth = rows.length === 1 ? chartW : chartW / Math.max(1, rows.length - 1);
+      const barGroupWidth = Math.min(54, bandWidth * 0.56);
+      const barSlotWidth = barSeries.length ? barGroupWidth / barSeries.length : 0;
+      const barWidth = Math.max(5, barSlotWidth * 0.72);
+
+      barSeries.forEach((series, seriesIndex) => {
+        const values = normalized.get(series.key).values;
+        rows.forEach((row, i) => {
+          const raw = row[series.key] || 0;
+          const displayValue = series.unit === "money" ? `฿${money(raw)}` : `${fmt.format(raw)}`;
+          const tip = `${series.label}|${dateFmt.format(row.date)}|${displayValue}`;
+          const left = x(i) - barGroupWidth / 2 + seriesIndex * barSlotWidth + (barSlotWidth - barWidth) / 2;
+          const top = y(values[i]);
+          const height = pad.top + chartH - top;
+          svg.insertAdjacentHTML("beforeend", `<rect x="${left}" y="${top}" width="${barWidth}" height="${height}" rx="3" fill="${series.color}" opacity=".72" data-tip="${tip}" style="cursor:pointer"><title>${series.label} ${dateFmt.format(row.date)}: ${displayValue}</title></rect>`);
+        });
+      });
+
+      lineSeries.forEach((series) => {
+        const values = normalized.get(series.key).values;
+        const points = values.map((value, i) => `${x(i)},${y(value)}`).join(" ");
+        svg.insertAdjacentHTML("beforeend", `<polyline fill="none" stroke="${series.color}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" points="${points}"/>`);
+        rows.forEach((row, i) => {
+          const raw = row[series.key] || 0;
+          const displayValue = series.unit === "money" ? `฿${money(raw)}` : `${fmt.format(raw)}`;
+          const tip = `${series.label}|${dateFmt.format(row.date)}|${displayValue}`;
+          svg.insertAdjacentHTML("beforeend", `<circle cx="${x(i)}" cy="${y(values[i])}" r="4.5" fill="#fff" stroke="${series.color}" stroke-width="2" data-tip="${tip}" style="cursor:pointer"><title>${series.label} ${dateFmt.format(row.date)}: ${displayValue}</title></circle>`);
+        });
+      });
+
+      svg.querySelectorAll("[data-tip]").forEach((point) => {
+        point.addEventListener("mouseenter", (event) => {
+          const [label, date, value] = point.dataset.tip.split("|");
+          tooltip.innerHTML = `${label} ${date}<strong>${value}</strong>`;
+          const rect = tooltip.parentElement.getBoundingClientRect();
+          tooltip.style.left = `${event.clientX - rect.left}px`;
+          tooltip.style.top = `${event.clientY - rect.top}px`;
+          tooltip.classList.add("is-visible");
+        });
+        point.addEventListener("mouseleave", () => {
+          tooltip.classList.remove("is-visible");
+        });
+      });
+
+      legend.innerHTML = renderChannelTrendLegend(availableSeries);
+      bindChannelTrendLegend();
+      hint.textContent = `${fmt.format(rows.length)} วัน`;
+    }
+
+    function renderCompanyChannelTrends(companyGroups) {
+      const container = document.getElementById("companyTrendGrid");
+      if (!container) return;
+      container.classList.toggle("is-single", companyGroups.length === 1);
+      container.innerHTML = companyGroups.map((group) => `
+        <article class="card company-trend-card">
+          <div class="company-trend-head">
+            <strong style="color:${COLORS[group.company]}">${group.company}</strong>
+            <span>${fmt.format(group.rows.length)} วัน</span>
+          </div>
+          <svg class="company-trend-chart" data-company="${group.company}" role="img" aria-label="แนวโน้มช่องทางรายวัน ${group.company}"></svg>
+        </article>
+      `).join("");
+
+      companyGroups.forEach((group) => {
+        const svg = container.querySelector(`.company-trend-chart[data-company="${group.company}"]`);
+        renderCompanyTrendChart(svg, group.rows);
+      });
+    }
+
+    function renderCompanyTrendChart(svg, rows) {
+      if (!svg) return;
+      const bounds = svg.getBoundingClientRect();
+      const w = Math.max(320, Math.round(bounds.width || 360));
+      const h = Math.max(200, Math.round(bounds.height || 220));
+      const pad = { top: 12, right: 8, bottom: 28, left: 32 };
+      const chartW = w - pad.left - pad.right;
+      const chartH = h - pad.top - pad.bottom;
+      const availableSeries = availableChannelTrendSeries(rows);
+      const seriesList = activeChannelTrendSeries(rows);
+
+      svg.setAttribute("viewBox", `0 0 ${w} ${h}`);
+      svg.innerHTML = "";
+
+      if (!rows.length || !availableSeries.length) {
+        svg.innerHTML = `<text x="${w / 2}" y="${h / 2}" text-anchor="middle" fill="#667385" font-size="13">ไม่มีข้อมูลในตัวกรองนี้</text>`;
+        return;
+      }
+
+      if (!seriesList.length) {
+        svg.innerHTML = `<text x="${w / 2}" y="${h / 2}" text-anchor="middle" fill="#667385" font-size="13">เลือกช่องทางเพื่อแสดงข้อมูล</text>`;
+        return;
+      }
+
+      const normalized = new Map();
+      seriesList.forEach((series) => {
+        const max = Math.max(0, ...rows.map((row) => row[series.key] || 0));
+        normalized.set(series.key, { max, values: rows.map((row) => max ? ((row[series.key] || 0) / max) * 100 : 0) });
+      });
+
+      const x = (i) => pad.left + (rows.length === 1 ? chartW / 2 : (i / (rows.length - 1)) * chartW);
+      const y = (value) => pad.top + chartH - (value / 100) * chartH;
+
+      [0, 50, 100].forEach((value) => {
+        const yy = y(value);
+        svg.insertAdjacentHTML("beforeend", `<line x1="${pad.left}" y1="${yy}" x2="${w - pad.right}" y2="${yy}" stroke="#d8e0ea" stroke-width="1"/>`);
+        svg.insertAdjacentHTML("beforeend", `<text x="${pad.left - 8}" y="${yy + 4}" text-anchor="end" fill="#667385" font-size="10">${value}</text>`);
+      });
+
+      rows.forEach((row, i) => {
+        const showLabel = rows.length <= 7 || i === 0 || i === rows.length - 1 || i % Math.ceil(rows.length / 4) === 0;
+        if (showLabel) {
+          svg.insertAdjacentHTML("beforeend", `<text x="${x(i)}" y="${h - 8}" text-anchor="middle" fill="#667385" font-size="10">${dateFmt.format(row.date)}</text>`);
+        }
+      });
+
+      const barSeries = seriesList.filter((series) => series.mark === "bar");
+      const lineSeries = seriesList.filter((series) => series.mark !== "bar");
+      const bandWidth = rows.length === 1 ? chartW : chartW / Math.max(1, rows.length - 1);
+      const barGroupWidth = Math.min(34, bandWidth * 0.54);
+      const barSlotWidth = barSeries.length ? barGroupWidth / barSeries.length : 0;
+      const barWidth = Math.max(4, barSlotWidth * 0.72);
+
+      barSeries.forEach((series, seriesIndex) => {
+        const values = normalized.get(series.key).values;
+        rows.forEach((row, i) => {
+          const raw = row[series.key] || 0;
+          const displayValue = channelTrendDisplayValue(series, raw);
+          const left = x(i) - barGroupWidth / 2 + seriesIndex * barSlotWidth + (barSlotWidth - barWidth) / 2;
+          const top = y(values[i]);
+          const height = pad.top + chartH - top;
+          svg.insertAdjacentHTML("beforeend", `<rect x="${left}" y="${top}" width="${barWidth}" height="${height}" rx="2" fill="${series.color}" opacity=".68"><title>${series.label} ${dateFmt.format(row.date)}: ${displayValue}</title></rect>`);
+        });
+      });
+
+      lineSeries.forEach((series) => {
+        const values = normalized.get(series.key).values;
+        const points = values.map((value, i) => `${x(i)},${y(value)}`).join(" ");
+        svg.insertAdjacentHTML("beforeend", `<polyline fill="none" stroke="${series.color}" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" points="${points}"/>`);
+        rows.forEach((row, i) => {
+          const raw = row[series.key] || 0;
+          const displayValue = channelTrendDisplayValue(series, raw);
+          svg.insertAdjacentHTML("beforeend", `<circle cx="${x(i)}" cy="${y(values[i])}" r="3.6" fill="#fff" stroke="${series.color}" stroke-width="2"><title>${series.label} ${dateFmt.format(row.date)}: ${displayValue}</title></circle>`);
+        });
+      });
+    }
+
+    function channelTrendDisplayValue(series, value) {
+      return series.unit === "money" ? `฿${money(value)}` : fmt.format(value);
+    }
+
+    function renderChannelTrendLegend(seriesList) {
+      return seriesList.map((series) => {
+        const isOff = state.channelTrendVisible[series.key] === false;
+        return `
+          <button type="button" class="legend-item legend-toggle${isOff ? " is-off" : ""}" data-series="${series.key}" aria-pressed="${!isOff}">
+            <span class="dot" style="--c:${series.color}"></span>${series.label}
+          </button>
+        `;
+      }).join("");
+    }
+
+    function bindChannelTrendLegend() {
+      document.querySelectorAll("#channelTrendLegend .legend-toggle").forEach((button) => {
+        button.addEventListener("click", () => {
+          const key = button.dataset.series;
+          state.channelTrendVisible[key] = state.channelTrendVisible[key] !== false ? false : true;
+          render();
+        });
+      });
     }
 
     function renderCompanies(adRows, googleAdRows) {
