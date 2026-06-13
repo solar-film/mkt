@@ -368,6 +368,14 @@
       background: var(--c);
     }
 
+    .dot.is-dashed {
+      width: 18px;
+      height: 0;
+      border-radius: 0;
+      background: transparent;
+      border-top: 2px dashed var(--c);
+    }
+
     .company-list {
       display: grid;
       gap: 10px;
@@ -830,14 +838,22 @@
       <section class="section" id="channelTrendSection">
         <div class="section-head">
           <h2>แนวโน้มช่องทางรายวัน</h2>
-          <span class="hint" id="channelTrendHint"></span>
+          <div style="display:flex;align-items:baseline;gap:12px;">
+            <span class="hint" id="channelTrendHint"></span>
+            <button type="button" id="channelTrendToggle" class="refresh-btn" aria-expanded="false" aria-controls="channelTrendContent">
+              <span class="refresh-icon" aria-hidden="true">▸</span>
+              แสดงกราฟ
+            </button>
+          </div>
         </div>
-        <div class="card chart-card channel-trend-card">
-          <svg class="chart" id="channelTrendChart" role="img" aria-label="กราฟเปรียบเทียบแนวโน้มช่องทางรายวัน"></svg>
-          <div class="chart-tooltip" id="channelTrendTooltip" aria-hidden="true"></div>
-          <div class="legend" id="channelTrendLegend"></div>
+        <div class="is-hidden" id="channelTrendContent">
+          <div class="card chart-card channel-trend-card">
+            <svg class="chart" id="channelTrendChart" role="img" aria-label="กราฟเปรียบเทียบแนวโน้มช่องทางรายวัน"></svg>
+            <div class="chart-tooltip" id="channelTrendTooltip" aria-hidden="true"></div>
+            <div class="legend" id="channelTrendLegend"></div>
+          </div>
+          <div class="company-trend-grid" id="companyTrendGrid"></div>
         </div>
-        <div class="company-trend-grid" id="companyTrendGrid"></div>
       </section>
 
       <section class="section" id="fbAdsSection">
@@ -1869,12 +1885,11 @@
         }
       });
 
-      const barSeries = seriesList.filter((series) => series.mark === "bar");
-      const lineSeries = seriesList.filter((series) => series.mark !== "bar");
-      const bandWidth = rows.length === 1 ? chartW : chartW / Math.max(1, rows.length - 1);
-      const barGroupWidth = Math.min(54, bandWidth * 0.56);
-      const barSlotWidth = barSeries.length ? barGroupWidth / barSeries.length : 0;
-      const barWidth = Math.max(5, barSlotWidth * 0.72);
+      const lineSeries = seriesList;
+      const barSeries = [];
+      const barGroupWidth = 0;
+      const barSlotWidth = 0;
+      const barWidth = 0;
 
       barSeries.forEach((series, seriesIndex) => {
         const values = normalized.get(series.key).values;
@@ -1892,7 +1907,8 @@
       lineSeries.forEach((series) => {
         const values = normalized.get(series.key).values;
         const points = values.map((value, i) => `${x(i)},${y(value)}`).join(" ");
-        svg.insertAdjacentHTML("beforeend", `<polyline fill="none" stroke="${series.color}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" points="${points}"/>`);
+        const dash = series.dashed ? ` stroke-dasharray="9 7"` : "";
+        svg.insertAdjacentHTML("beforeend", `<polyline fill="none" stroke="${series.color}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"${dash} points="${points}"/>`);
         rows.forEach((row, i) => {
           const raw = row[series.key] || 0;
           const displayValue = series.unit === "money" ? `฿${money(raw)}` : `${fmt.format(raw)}`;
@@ -2008,7 +2024,8 @@
       lineSeries.forEach((series) => {
         const values = normalized.get(series.key).values;
         const points = values.map((value, i) => `${x(i)},${y(value)}`).join(" ");
-        svg.insertAdjacentHTML("beforeend", `<polyline fill="none" stroke="${series.color}" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" points="${points}"/>`);
+        const dash = series.dashed ? ` stroke-dasharray="7 6"` : "";
+        svg.insertAdjacentHTML("beforeend", `<polyline fill="none" stroke="${series.color}" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"${dash} points="${points}"/>`);
         rows.forEach((row, i) => {
           const raw = row[series.key] || 0;
           const displayValue = channelTrendDisplayValue(series, raw);
@@ -2026,7 +2043,7 @@
         const isOff = state.channelTrendVisible[series.key] === false;
         return `
           <button type="button" class="legend-item legend-toggle${isOff ? " is-off" : ""}" data-series="${series.key}" aria-pressed="${!isOff}">
-            <span class="dot" style="--c:${series.color}"></span>${series.label}
+            <span class="dot${series.dashed ? " is-dashed" : ""}" style="--c:${series.color}"></span>${series.label}
           </button>
         `;
       }).join("");
@@ -2548,6 +2565,16 @@
 
     document.getElementById("refreshButton").addEventListener("click", () => {
       loadData(true);
+    });
+
+    document.getElementById("channelTrendToggle").addEventListener("click", (event) => {
+      const content = document.getElementById("channelTrendContent");
+      const button = event.currentTarget;
+      const isHidden = content.classList.toggle("is-hidden");
+      button.setAttribute("aria-expanded", String(!isHidden));
+      button.querySelector(".refresh-icon").textContent = isHidden ? "▸" : "▾";
+      button.lastChild.textContent = isHidden ? " แสดงกราฟ" : " ซ่อนกราฟ";
+      if (!isHidden) render();
     });
 
     document.getElementById("tableToggle").addEventListener("click", (event) => {
